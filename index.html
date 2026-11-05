@@ -1,184 +1,216 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shop Currency Management</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      background: #f3f5f9;
-      color: #172033;
-    }
-
-    header {
-      background: #14243b;
-      color: white;
-      padding: 22px;
-    }
-
-    header h2 {
-      font-size: 21px;
-    }
-
-    header p {
-      color: #b9c5d5;
-      margin-top: 7px;
-      font-size: 13px;
-    }
-
-    main {
-      max-width: 1100px;
-      margin: auto;
-      padding: 20px;
-    }
-
-    .welcome {
-      margin-bottom: 22px;
-    }
-
-    .welcome h2 {
-      font-size: 22px;
-      margin-bottom: 6px;
-    }
-
-    .welcome p {
-      color: #68758a;
-      font-size: 14px;
-    }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 15px;
-    }
-
-    .card {
-      background: white;
-      padding: 22px;
-      border-radius: 12px;
-      border: 1px solid #e5e9f0;
-    }
-
-    .card p {
-      color: #69768a;
-      font-size: 14px;
-    }
-
-    .card h2 {
-      font-size: 26px;
-      margin-top: 14px;
-    }
-
-    .usd { border-top: 4px solid #16a36a; }
-    .afn { border-top: 4px solid #3478db; }
-    .cny { border-top: 4px solid #df9930; }
-
-    .section {
-      margin-top: 25px;
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid #e5e9f0;
-    }
-
-    .section h3 {
-      margin-bottom: 16px;
-    }
-
-    .actions {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
-      gap: 12px;
-    }
-
-    .action {
-      background: #f1f5fb;
-      padding: 17px 10px;
-      border-radius: 9px;
-      text-align: center;
-      font-size: 14px;
-      font-weight: bold;
-      color: #203a5c;
-    }
-
-    .note {
-      color: #718096;
-      font-size: 13px;
-      margin-top: 12px;
-    }
-
-    footer {
-      text-align: center;
-      color: #8993a3;
-      padding: 25px;
-      font-size: 12px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shop Currency Management</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f1f5f9;color:#172033;font-family:Arial,sans-serif}
+header{background:#10243e;color:white;padding:22px}
+header h2{margin:0 0 5px}
+main{max-width:900px;margin:25px auto;padding:15px}
+.card{background:white;padding:20px;border-radius:12px;margin-bottom:15px;box-shadow:0 2px 8px #0000000d}
+input,button{width:100%;padding:13px;margin:8px 0;border-radius:7px;font-size:16px}
+input{border:1px solid #cbd5e1}
+button{background:#1764c0;color:white;border:0;font-weight:bold}
+button:disabled{opacity:.5}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.balance{font-size:26px;font-weight:bold;margin-top:12px}
+.small{color:#64748b;font-size:13px}
+#dashboard{display:none}
+#error{color:#c62828}
+#success{color:#15803d}
+</style>
 </head>
-
 <body>
 
 <header>
-  <h2>Shop Currency Management</h2>
-  <p>Main Shop: Hameed | Account Dashboard</p>
+<h2>Shop Currency Management</h2>
+<div>Administrator Dashboard</div>
 </header>
 
 <main>
+<section id="login" class="card">
+<h3>Administrator Login</h3>
+<p class="small">Sign in using your Supabase administrator account.</p>
+<form id="loginForm">
+<input id="email" type="email" placeholder="Administrator email" required>
+<input id="password" type="password" placeholder="Password" required>
+<button id="loginButton" type="submit">Login</button>
+</form>
+<p id="error"></p>
+</section>
 
-  <div class="welcome">
-    <h2>Dashboard Overview</h2>
-    <p>Manage shop collections and currency accounts.</p>
-  </div>
+<section id="dashboard">
+<div class="card">
+<h3>Welcome, Administrator</h3>
+<p class="small">Your website is connected to Supabase.</p>
+<button id="refreshButton">Refresh dashboard</button>
+<button id="logoutButton">Logout</button>
+<p id="message"></p>
+</div>
 
-  <div class="cards">
+<h3>Exchange Center Accounts</h3>
+<div id="accounts" class="grid"></div>
 
-    <div class="card usd">
-      <p>US Dollar Account</p>
-      <h2>$0.00</h2>
-    </div>
+<h3>Branches</h3>
+<div id="branches" class="grid"></div>
 
-    <div class="card afn">
-      <p>Afghani Account</p>
-      <h2>؋0.00</h2>
-    </div>
-
-    <div class="card cny">
-      <p>Chinese Yuan Account</p>
-      <h2>¥0.00</h2>
-    </div>
-
-  </div>
-
-  <div class="section">
-    <h3>Management Sections</h3>
-
-    <div class="actions">
-      <div class="action">Branch Collection</div>
-      <div class="action">Main Shop</div>
-      <div class="action">Currency Accounts</div>
-      <div class="action">Currency Exchange</div>
-      <div class="action">Transactions</div>
-      <div class="action">Reports</div>
-    </div>
-
-    <p class="note">
-      Dashboard design preview. Database and transaction functions
-      will be added in later development stages.
-    </p>
-  </div>
-
+<div class="card">
+<h3>System status</h3>
+<p id="status">Loading...</p>
+<p class="small">Balances are calculated from account transactions. They will remain zero until transactions are recorded.</p>
+</div>
+</section>
 </main>
 
-<footer>
-  Shop Currency Management System © 2026
-</footer>
+<script type="module">
+import { createClient } from
+'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
+const SUPABASE_URL = 'https://wayvtnsknotobfjpoddr.supabase.co';
+
+const SUPABASE_KEY =
+'sb_publishable_swDTvd_H_LOxy1NqcKQd6g_bFs14oe1';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const loginSection = document.getElementById('login');
+const dashboard = document.getElementById('dashboard');
+const errorBox = document.getElementById('error');
+const message = document.getElementById('message');
+
+async function loadDashboard() {
+  message.textContent = 'Loading database...';
+
+  const { data: accounts, error: accountError } =
+    await supabase.from('accounts').select('*');
+
+  if (accountError) {
+    message.textContent = 'Account error: ' + accountError.message;
+    return;
+  }
+
+  const { data: transactions, error: transactionError } =
+    await supabase.from('account_transactions')
+    .select('account_id,direction,amount');
+
+  if (transactionError) {
+    message.textContent = 'Transaction error: ' +
+      transactionError.message;
+    return;
+  }
+
+  const accountBox = document.getElementById('accounts');
+  accountBox.innerHTML = '';
+
+  accounts.forEach(account => {
+    let balance = 0;
+
+    transactions.forEach(transaction => {
+      if (transaction.account_id === account.id) {
+        if (transaction.direction === 'receive') {
+          balance += Number(transaction.amount);
+        } else {
+          balance -= Number(transaction.amount);
+        }
+      }
+    });
+
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const heading = document.createElement('h3');
+    heading.textContent = account.account_name;
+
+    const amount = document.createElement('div');
+    amount.className = 'balance';
+    amount.textContent =
+      balance.toLocaleString(undefined, {
+        maximumFractionDigits: 2
+      }) + ' ' + account.currency_code;
+
+    card.append(heading, amount);
+    accountBox.appendChild(card);
+  });
+
+  const { data: branches, error: branchError } =
+    await supabase.from('branches').select('*');
+
+  if (branchError) {
+    message.textContent = 'Branch error: ' + branchError.message;
+    return;
+  }
+
+  const branchBox = document.getElementById('branches');
+  branchBox.innerHTML = '';
+
+  branches.forEach(branch => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.textContent = branch.name;
+    branchBox.appendChild(card);
+  });
+
+  document.getElementById('status').textContent =
+    'Database connected successfully. ' +
+    accounts.length + ' accounts and ' +
+    branches.length + ' branches loaded.';
+
+  message.textContent = 'Dashboard updated successfully.';
+}
+
+async function showDashboard() {
+  loginSection.style.display = 'none';
+  dashboard.style.display = 'block';
+  await loadDashboard();
+}
+
+document.getElementById('loginForm')
+.addEventListener('submit', async event => {
+  event.preventDefault();
+
+  const button = document.getElementById('loginButton');
+  button.disabled = true;
+  button.textContent = 'Logging in...';
+  errorBox.textContent = '';
+
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  button.disabled = false;
+  button.textContent = 'Login';
+
+  if (error) {
+    errorBox.textContent = error.message;
+    return;
+  }
+
+  await showDashboard();
+});
+
+document.getElementById('refreshButton')
+.addEventListener('click', loadDashboard);
+
+document.getElementById('logoutButton')
+.addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  dashboard.style.display = 'none';
+  loginSection.style.display = 'block';
+  document.getElementById('password').value = '';
+});
+
+const { data: sessionData } = await supabase.auth.getSession();
+
+if (sessionData.session) {
+  await showDashboard();
+}
+</script>
 </body>
 </html>
