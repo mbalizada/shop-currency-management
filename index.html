@@ -185,6 +185,216 @@ function today() {
 
 document.getElementById('collectionDate').value = today();
 
+// DEPOSITS MODULE
+
+document.getElementById('depositDate').value = today();
+
+let depositSources = [];
+
+async function loadDeposits() {
+  const box = document.getElementById('pendingDeposits');
+  const select = document.getElementById('depositSource');
+
+  box.textContent = 'Loading pending amounts...';
+  select.innerHTML = '<option value="">Select source</option>';
+  depositSources = [];
+
+  const { data: collections, error: cError } =
+    await supabase.from('collections')
+    .select('*');
+
+  if (cError) {
+    box.textContent = cError.message;
+    return;
+  }
+
+  const { data: items, error: iError } =
+    await supabase.from('collection_items')
+    .select('id,collection_id,currency_code,amount,deposit_items(amount)');
+
+  if (iError) {
+    box.textContent = iError.message;
+    return;
+  }
+
+  const { data: conversions, error: vError } =
+    await supabase.from('currency_conversions')
+    .select('id,collection_item_id,target_currency,target_amount,deposit_items(amount)');
+
+  if (vError) {
+    box.textContent = vError.message;
+    return;
+  }
+
+  function sourceName(collection) {
+    if (!collection) return 'Unknown source';
+
+    if (collection.source_type === 'own_shop') {
+      return "Hameed's Own Shop";
+    }
+
+    const branch = branchRows.find(
+      b => b.id === collection.branch_id
+    );
+
+    return branch ? branch.name : 'Branch';
+  }
+
+  items.forEach(item => {
+    if (!['USD', 'AFN', 'CNY'].includes(item.currency_code)) {
+      return;
+    }
+
+    const deposited = (item.deposit_items || [])
+      .reduce((sum, d) => sum + Number(d.amount), 0);
+
+    const pending = Number(item.amount) - deposited;
+
+    if (pending <= 0) return;
+
+    const collection = collections.find(
+      c => c.id === item.collection_id
+    );
+
+    depositSources.push({
+      type: 'collection',
+      id: item.id,
+      currency: item.currency_code,
+      pending,
+      label: sourceName(collection) + ' | ' +
+        (collection?.collection_date || '') + ' | ' +
+        item.currency_code
+    });
+  });
+
+  conversions.forEach(item => {
+    if (!['USD', 'AFN', 'CNY'].includes(item.target_currency)) {
+      return;
+    }
+
+    const deposited = (item.deposit_items || [])
+      .reduce((sum, d) => sum + Number(d.amount), 0);
+
+    const pending = Number(item.target_amount) - deposited;
+
+    if (pending <= 0) return;
+
+    const original = items.find(
+      i => i.id === item.collection_item_id
+    );
+
+    const collection = collections.find(
+      c => c.id === original?.collection_id
+    );
+
+    depositSources.push({
+      type: 'conversion',
+      id: item.id,
+      currency: item.target_currency,
+      pending,
+      label: sourceName(collection) + ' | Converted | ' +
+        item.target_currency
+    });
+  });
+
+  box.innerHTML = '';
+
+  const totals = { USD: 0, AFN: 0, CNY: 0 };
+
+  depositSources.forEach(item => {
+    totals[item.currency] += item.pending;
+
+    const option = document.createElement('option');
+    option.value = item.type + '|' + item.id;
+    option.textContent =
+      item.label + ' | Pending: ' +
+      item.pending.toLocaleString();
+
+    select.appendChild(option);
+  });
+
+  Object.keys(totals).forEach(currency => {
+    const row = document.createElement('p');
+    row.textContent =
+      currency + ' pending: ' +
+      totals[currency].toLocaleString() + ' ' + currency;
+    box.appendChild(row);
+  });
+
+  if (depositSources.length === 0) {
+    box.textContent = 'No amounts currently available for deposit.';
+  }
+}
+
+document.getElementById('depositSource')
+.addEventListener('change', () => {
+  const selected = depositSources.find(
+    item => item.type + '|' + item.id ===
+      document.getElementById('depositSource').value
+  );
+
+  const amount = document.getElementById('depositAmount');
+
+  if (selected) {
+    amount.max = selected.pending;
+    amount.placeholder =
+      'Maximum: ' + selected.pending;
+  } else {
+    amount.removeAttribute('max');
+    amount.placeholder = '';
+  }
+});
+
+document.getElementById('depositForm')
+.addEventListener('submit', async event => {
+  event.preventDefault();
+
+  const button = document.getElementById('saveDeposit');
+  const message = document.getElementById('depositMessage');
+
+  const selected = depositSources.find(
+    item => item.type + '|' + item.id ===
+      document.getElementById('depositSource').value
+  );
+
+  const amount = Number(
+    document.getElementById('depositAmount').value
+  );
+
+  if (!selected || amount <= 0 || amount > selected.pending) {
+    message.textContent = 'Please select a valid amount.';
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = 'Saving...';
+  message.textContent = '';
+
+  const { error } = await supabase.rpc('record_deposit', {
+    p_source_type: selected.type,
+    p_source_id: selected.id,
+    p_amount: amount,
+    p_deposit_date:
+      document.getElementById('depositDate').value,
+    p_details:
+      document.getElementById('depositDetails').value.trim()
+  });
+
+  if (error) {
+    message.textContent = 'Error: ' + error.message;
+  } else {
+    message.textContent = 'Deposit saved successfully!';
+
+    document.getElementById('depositAmount').value = '';
+    document.getElementById('depositDetails').value = '';
+
+    await loadDashboard();
+  }
+
+  button.disabled = false;
+  button.textContent = 'Save Deposit';
+});
+  
 async function loadDashboard() {
   message.textContent = 'Loading dashboard...';
 
