@@ -9,18 +9,18 @@
 body{margin:0;background:#f1f5f9;color:#172033;font-family:Arial,sans-serif}
 header{background:#10243e;color:white;padding:22px}
 header h2{margin:0 0 5px}
-main{max-width:900px;margin:25px auto;padding:15px}
+main{max-width:950px;margin:25px auto;padding:15px}
 .card{background:white;padding:20px;border-radius:12px;margin-bottom:15px;box-shadow:0 2px 8px #0000000d}
-input,button{width:100%;padding:13px;margin:8px 0;border-radius:7px;font-size:16px}
-input{border:1px solid #cbd5e1}
+input,select,button{width:100%;padding:13px;margin:8px 0;border-radius:7px;font-size:16px}
+input,select{border:1px solid #cbd5e1;background:white}
 button{background:#1764c0;color:white;border:0;font-weight:bold}
 button:disabled{opacity:.5}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-.balance{font-size:26px;font-weight:bold;margin-top:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.balance{font-size:25px;font-weight:bold;margin-top:12px}
 .small{color:#64748b;font-size:13px}
-#dashboard{display:none}
 #error{color:#c62828}
 #success{color:#15803d}
+.section{margin-top:28px}
 </style>
 </head>
 <body>
@@ -31,37 +31,85 @@ button:disabled{opacity:.5}
 </header>
 
 <main>
+
 <section id="login" class="card">
 <h3>Administrator Login</h3>
-<p class="small">Sign in using your Supabase administrator account.</p>
 <form id="loginForm">
 <input id="email" type="email" placeholder="Administrator email" required>
 <input id="password" type="password" placeholder="Password" required>
-<button id="loginButton" type="submit">Login</button>
+<button id="loginButton">Login</button>
 </form>
 <p id="error"></p>
 </section>
 
-<section id="dashboard">
+<section id="dashboard" style="display:none">
+
 <div class="card">
 <h3>Welcome, Administrator</h3>
-<p class="small">Your website is connected to Supabase.</p>
-<button id="refreshButton">Refresh dashboard</button>
+<p class="small">Your business management system</p>
+<button id="refreshButton">Refresh Dashboard</button>
 <button id="logoutButton">Logout</button>
 <p id="message"></p>
 </div>
 
+<div class="section">
 <h3>Exchange Center Accounts</h3>
 <div id="accounts" class="grid"></div>
+</div>
 
+<div class="section">
 <h3>Branches</h3>
 <div id="branches" class="grid"></div>
+</div>
+
+<div class="section card">
+<h3>Weekly / Daily Collection</h3>
+<p class="small">Enter all five currencies for one branch or Hameed's own shop.</p>
+
+<form id="collectionForm">
+
+<label>Collection source</label>
+<select id="source" required>
+<option value="">Loading branches...</option>
+</select>
+
+<label>Collection date</label>
+<input id="collectionDate" type="date" required>
+
+<label>AFN – Afghan Afghani</label>
+<input id="AFN" type="number" min="0" step="0.01" value="0">
+
+<label>USD – US Dollar</label>
+<input id="USD" type="number" min="0" step="0.01" value="0">
+
+<label>CNY – Chinese Yuan</label>
+<input id="CNY" type="number" min="0" step="0.01" value="0">
+
+<label>SAR – Saudi Riyal</label>
+<input id="SAR" type="number" min="0" step="0.01" value="0">
+
+<label>PKR – Pakistani Rupee</label>
+<input id="PKR" type="number" min="0" step="0.01" value="0">
+
+<label>Details (optional)</label>
+<input id="details" type="text" placeholder="Example: Weekly collection">
+
+<button id="saveCollection" type="submit">Save Collection</button>
+<p id="collectionMessage"></p>
+
+</form>
+</div>
+
+<div class="section card">
+<h3>Recent Collections</h3>
+<div id="recentCollections">Loading...</div>
+</div>
 
 <div class="card">
-<h3>System status</h3>
+<h3>System Status</h3>
 <p id="status">Loading...</p>
-<p class="small">Balances are calculated from account transactions. They will remain zero until transactions are recorded.</p>
 </div>
+
 </section>
 </main>
 
@@ -69,7 +117,8 @@ button:disabled{opacity:.5}
 import { createClient } from
 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-const SUPABASE_URL = 'https://wayvtnsknotobfjpoddr.supabase.co';
+const SUPABASE_URL =
+'https://wayvtnsknotobfjpoddr.supabase.co';
 
 const SUPABASE_KEY =
 'sb_publishable_swDTvd_H_LOxy1NqcKQd6g_bFs14oe1';
@@ -80,15 +129,29 @@ const loginSection = document.getElementById('login');
 const dashboard = document.getElementById('dashboard');
 const errorBox = document.getElementById('error');
 const message = document.getElementById('message');
+const collectionMessage =
+document.getElementById('collectionMessage');
+
+let branchRows = [];
+
+function today() {
+  const d = new Date();
+  const local = new Date(
+    d.getTime() - d.getTimezoneOffset() * 60000
+  );
+  return local.toISOString().slice(0, 10);
+}
+
+document.getElementById('collectionDate').value = today();
 
 async function loadDashboard() {
-  message.textContent = 'Loading database...';
+  message.textContent = 'Loading dashboard...';
 
   const { data: accounts, error: accountError } =
     await supabase.from('accounts').select('*');
 
   if (accountError) {
-    message.textContent = 'Account error: ' + accountError.message;
+    message.textContent = accountError.message;
     return;
   }
 
@@ -97,8 +160,7 @@ async function loadDashboard() {
     .select('account_id,direction,amount');
 
   if (transactionError) {
-    message.textContent = 'Transaction error: ' +
-      transactionError.message;
+    message.textContent = transactionError.message;
     return;
   }
 
@@ -108,30 +170,26 @@ async function loadDashboard() {
   accounts.forEach(account => {
     let balance = 0;
 
-    transactions.forEach(transaction => {
-      if (transaction.account_id === account.id) {
-        if (transaction.direction === 'receive') {
-          balance += Number(transaction.amount);
-        } else {
-          balance -= Number(transaction.amount);
-        }
+    transactions.forEach(t => {
+      if (t.account_id === account.id) {
+        balance += t.direction === 'receive'
+          ? Number(t.amount)
+          : -Number(t.amount);
       }
     });
 
     const card = document.createElement('div');
     card.className = 'card';
 
-    const heading = document.createElement('h3');
-    heading.textContent = account.account_name;
+    const title = document.createElement('h3');
+    title.textContent = account.account_name;
 
     const amount = document.createElement('div');
     amount.className = 'balance';
     amount.textContent =
-      balance.toLocaleString(undefined, {
-        maximumFractionDigits: 2
-      }) + ' ' + account.currency_code;
+      balance.toLocaleString() + ' ' + account.currency_code;
 
-    card.append(heading, amount);
+    card.append(title, amount);
     accountBox.appendChild(card);
   });
 
@@ -139,9 +197,11 @@ async function loadDashboard() {
     await supabase.from('branches').select('*');
 
   if (branchError) {
-    message.textContent = 'Branch error: ' + branchError.message;
+    message.textContent = branchError.message;
     return;
   }
+
+  branchRows = branches;
 
   const branchBox = document.getElementById('branches');
   branchBox.innerHTML = '';
@@ -153,19 +213,181 @@ async function loadDashboard() {
     branchBox.appendChild(card);
   });
 
+  const source = document.getElementById('source');
+  source.innerHTML = '';
+
+  const own = document.createElement('option');
+  own.value = 'own_shop';
+  own.textContent = "Hameed's Own Shop";
+  source.appendChild(own);
+
+  branches.forEach(branch => {
+    const option = document.createElement('option');
+    option.value = branch.id;
+    option.textContent = branch.name;
+    source.appendChild(option);
+  });
+
+  await loadRecentCollections();
+
   document.getElementById('status').textContent =
-    'Database connected successfully. ' +
-    accounts.length + ' accounts and ' +
-    branches.length + ' branches loaded.';
+    'Connected. ' + accounts.length +
+    ' accounts and ' + branches.length + ' branches loaded.';
 
   message.textContent = 'Dashboard updated successfully.';
 }
 
-async function showDashboard() {
-  loginSection.style.display = 'none';
-  dashboard.style.display = 'block';
-  await loadDashboard();
+async function loadRecentCollections() {
+  const box = document.getElementById('recentCollections');
+
+  const { data, error } = await supabase
+    .from('collections')
+    .select('*')
+    .order('collection_date', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  if (error) {
+    box.textContent = 'Error: ' + error.message;
+    return;
+  }
+
+  box.innerHTML = '';
+
+  if (!data.length) {
+    box.textContent = 'No collections recorded yet.';
+    return;
+  }
+
+  data.forEach(item => {
+    const branch = branchRows.find(b => b.id === item.branch_id);
+
+    const row = document.createElement('div');
+    row.className = 'card';
+
+    const title = document.createElement('strong');
+    title.textContent = item.source_type === 'own_shop'
+      ? "Hameed's Own Shop"
+      : (branch ? branch.name : 'Branch');
+
+    const date = document.createElement('p');
+    date.textContent = 'Date: ' + item.collection_date;
+
+    row.append(title, date);
+    box.appendChild(row);
+  });
 }
+
+document.getElementById('collectionForm')
+.addEventListener('submit', async event => {
+  event.preventDefault();
+
+  const button = document.getElementById('saveCollection');
+  button.disabled = true;
+  button.textContent = 'Saving...';
+  collectionMessage.textContent = '';
+
+  const selectedSource =
+    document.getElementById('source').value;
+
+  if (!selectedSource) {
+    collectionMessage.textContent = 'Select a collection source.';
+    button.disabled = false;
+    button.textContent = 'Save Collection';
+    return;
+  }
+
+  const currencies = ['AFN', 'USD', 'CNY', 'SAR', 'PKR'];
+  const items = [];
+
+  for (const currency of currencies) {
+    const amount = Number(
+      document.getElementById(currency).value
+    );
+
+    if (!Number.isFinite(amount) || amount < 0) {
+      collectionMessage.textContent =
+        'Enter valid non-negative amounts.';
+      button.disabled = false;
+      button.textContent = 'Save Collection';
+      return;
+    }
+
+    if (amount > 0) {
+      items.push({
+        currency_code: currency,
+        amount: amount
+      });
+    }
+  }
+
+  if (items.length === 0) {
+    collectionMessage.textContent =
+      'Enter at least one amount greater than zero.';
+    button.disabled = false;
+    button.textContent = 'Save Collection';
+    return;
+  }
+
+  const isOwnShop = selectedSource === 'own_shop';
+
+  const collection = {
+    collection_date:
+      document.getElementById('collectionDate').value,
+    source_type: isOwnShop ? 'own_shop' : 'branch',
+    branch_id: isOwnShop ? null : selectedSource,
+    details: document.getElementById('details').value.trim()
+  };
+
+  const { data: saved, error: saveError } = await supabase
+    .from('collections')
+    .insert(collection)
+    .select()
+    .single();
+
+  if (saveError) {
+    collectionMessage.textContent =
+      'Could not save: ' + saveError.message;
+    button.disabled = false;
+    button.textContent = 'Save Collection';
+    return;
+  }
+
+  const records = items.map(item => ({
+    collection_id: saved.id,
+    currency_code: item.currency_code,
+    amount: item.amount
+  }));
+
+  const { error: itemsError } = await supabase
+    .from('collection_items')
+    .insert(records);
+
+  if (itemsError) {
+    collectionMessage.textContent =
+      'Collection record was created, but its currency amounts failed to save. Do not submit it again. Error: ' +
+      itemsError.message;
+    button.disabled = false;
+    button.textContent = 'Save Collection';
+    return;
+  }
+
+  collectionMessage.textContent =
+    'Collection saved successfully!';
+
+  currencies.forEach(currency => {
+    document.getElementById(currency).value = '0';
+  });
+
+  document.getElementById('details').value = '';
+  document.getElementById('source').value = '';
+  document.getElementById('collectionDate').value = today();
+
+  await loadDashboard();
+
+  button.disabled = false;
+  button.textContent = 'Save Collection';
+});
 
 document.getElementById('loginForm')
 .addEventListener('submit', async event => {
@@ -176,12 +398,9 @@ document.getElementById('loginForm')
   button.textContent = 'Logging in...';
   errorBox.textContent = '';
 
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-
   const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password
+    email: document.getElementById('email').value,
+    password: document.getElementById('password').value
   });
 
   button.disabled = false;
@@ -195,6 +414,12 @@ document.getElementById('loginForm')
   await showDashboard();
 });
 
+async function showDashboard() {
+  loginSection.style.display = 'none';
+  dashboard.style.display = 'block';
+  await loadDashboard();
+}
+
 document.getElementById('refreshButton')
 .addEventListener('click', loadDashboard);
 
@@ -206,11 +431,13 @@ document.getElementById('logoutButton')
   document.getElementById('password').value = '';
 });
 
-const { data: sessionData } = await supabase.auth.getSession();
+const { data: sessionData } =
+await supabase.auth.getSession();
 
 if (sessionData.session) {
   await showDashboard();
 }
 </script>
+
 </body>
 </html>
