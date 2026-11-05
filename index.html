@@ -101,6 +101,47 @@ button:disabled{opacity:.5}
 </div>
 
 <div class="section card">
+  <h3>Deposits – Exchange Center</h3>
+  <p class="small">
+    Deposit collected money into USD, AFN and CNY accounts.
+  </p>
+
+  <div id="pendingDeposits">
+    Loading pending amounts...
+  </div>
+
+  <h3>Record New Deposit</h3>
+
+  <form id="depositForm">
+    <label>Select collection or conversion</label>
+    <select id="depositSource" required>
+      <option value="">Loading...</option>
+    </select>
+
+    <label>Deposit date</label>
+    <input id="depositDate" type="date" required>
+
+    <label>Amount to deposit</label>
+    <input id="depositAmount"
+           type="number"
+           min="0.01"
+           step="0.01"
+           required>
+
+    <label>Details (optional)</label>
+    <input id="depositDetails"
+           type="text"
+           placeholder="Deposit details">
+
+    <button id="saveDeposit" type="submit">
+      Save Deposit
+    </button>
+
+    <p id="depositMessage"></p>
+  </form>
+</div>
+
+<div class="section card">
 <h3>Recent Collections</h3>
 <div id="recentCollections">Loading...</div>
 </div>
