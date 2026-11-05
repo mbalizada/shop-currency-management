@@ -2,157 +2,225 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shop Currency Management</title>
+
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#f1f5f9;color:#172033;font-family:Arial,sans-serif}
-header{background:#10243e;color:white;padding:22px}
-header h2{margin:0 0 5px}
-main{max-width:950px;margin:25px auto;padding:15px}
-.card{background:white;padding:20px;border-radius:12px;margin-bottom:15px;box-shadow:0 2px 8px #0000000d}
-input,select,button{width:100%;padding:13px;margin:8px 0;border-radius:7px;font-size:16px}
-input,select{border:1px solid #cbd5e1;background:white}
-button{background:#1764c0;color:white;border:0;font-weight:bold}
-button:disabled{opacity:.5}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
-.balance{font-size:25px;font-weight:bold;margin-top:12px}
-.small{color:#64748b;font-size:13px}
-#error{color:#c62828}
-#success{color:#15803d}
-.section{margin-top:28px}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6fa;color:#202938}
+header{background:#14243a;color:white;padding:18px}
+header h2{margin:0;font-size:20px}
+header p{margin:5px 0 0;color:#cbd5e1;font-size:13px}
+.container{max-width:1100px;margin:auto;padding:16px}
+.card{background:white;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px #0000000c}
+h3{margin:0 0 14px}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+button{border:0;border-radius:8px;padding:11px 15px;background:#1769aa;color:white;font-weight:bold;cursor:pointer}
+button.secondary{background:#e8edf4;color:#26364a}
+button:disabled{opacity:.5;cursor:not-allowed}
+input,select{padding:10px;border:1px solid #ccd4df;border-radius:7px;width:100%;font-size:14px}
+label{display:block;font-size:13px;font-weight:bold;margin:10px 0 5px}
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:650px}
+th,td{padding:10px;border-bottom:1px solid #e8edf2;text-align:right;font-size:14px}
+th{background:#f1f5f9;color:#34445a}
+th:first-child,td:first-child{text-align:left}
+td input{min-width:90px;text-align:right}
+.total-row{font-weight:bold;background:#eef4fb}
+.balance-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.balance-card{background:#edf4fb;padding:15px;border-radius:10px}
+.balance-card small{color:#53657a}
+.balance-card h2{margin:8px 0 0;font-size:23px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.message{padding:10px;border-radius:7px;margin:10px 0;font-size:14px}
+.error{background:#feecec;color:#a32222}
+.success{background:#e7f8ee;color:#176b3a}
+.muted{color:#66758a;font-size:13px}
+.hidden{display:none!important}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.login-box{max-width:400px;margin:50px auto}
+footer{text-align:center;color:#8290a2;font-size:12px;padding:20px}
+@media(max-width:600px){
+.container{padding:10px}
+.card{padding:12px}
+header{padding:15px}
+button{padding:10px 12px}
+}
 </style>
 </head>
+
 <body>
 
 <header>
-<h2>Shop Currency Management</h2>
-<div>Administrator Dashboard</div>
+  <h2>Shop Currency Management</h2>
+  <p>Collections and Exchange Center Accounts</p>
 </header>
 
-<main>
+<div class="container">
 
-<section id="login" class="card">
-<h3>Administrator Login</h3>
-<form id="loginForm">
-<input id="email" type="email" placeholder="Administrator email" required>
-<input id="password" type="password" placeholder="Password" required>
-<button id="loginButton">Login</button>
-</form>
-<p id="error"></p>
-</section>
+  <section id="loginSection" class="card login-box">
+    <h3>Administrator Login</h3>
+    <label>Email</label>
+    <input id="email" type="email" placeholder="Enter your email">
+    <label>Password</label>
+    <input id="password" type="password" placeholder="Enter your password">
+    <div class="actions">
+      <button id="loginBtn" onclick="login()">Login</button>
+    </div>
+    <div id="loginMessage"></div>
+  </section>
 
-<section id="dashboard" style="display:none">
+  <main id="app" class="hidden">
 
-<div class="card">
-<h3>Welcome, Administrator</h3>
-<p class="small">Your business management system</p>
-<button id="refreshButton">Refresh Dashboard</button>
-<button id="logoutButton">Logout</button>
-<p id="message"></p>
+    <div class="actions" style="justify-content:space-between;margin-bottom:15px">
+      <span class="muted" id="welcomeText">Administrator</span>
+      <button class="secondary" onclick="logout()">Logout</button>
+    </div>
+
+    <nav>
+      <button onclick="showPage('dashboard')">Dashboard</button>
+      <button onclick="showPage('collection')">Weekly Collection</button>
+      <button onclick="showPage('ledger')">Currency Accounts</button>
+    </nav>
+
+    <!-- DASHBOARD -->
+    <section id="dashboardPage">
+      <div class="card">
+        <h3>Exchange Center Accounts</h3>
+        <div id="dashboardBalances" class="balance-grid">
+          Loading accounts...
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Quick Guide</h3>
+        <p>1. Record the amounts collected from each shop in Weekly Collection.</p>
+        <p>2. When money reaches an exchange-center account, record it as Receive.</p>
+        <p>3. When money is sent out, record it as Send.</p>
+        <p class="muted">Collection records and account transactions are separate records. Recording a collection does not automatically increase an account balance.</p>
+      </div>
+    </section>
+
+    <!-- WEEKLY COLLECTION -->
+    <section id="collectionPage" class="hidden">
+      <div class="card">
+        <h3>Weekly Shop Collection</h3>
+        <label>Collection Date</label>
+        <input type="date" id="collectionDate" onchange="loadCollection()">
+
+        <p class="muted">
+          Enter each shop's collected amounts. Leave currencies empty or enter 0 when there is no collection.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Shop / Person</th>
+                <th>AFN</th>
+                <th>USD</th>
+                <th>CNY</th>
+                <th>SAR</th>
+                <th>PKR</th>
+              </tr>
+            </thead>
+            <tbody id="collectionRows"></tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td>Total</td>
+                <td id="total-AFN">0</td>
+                <td id="total-USD">0</td>
+                <td id="total-CNY">0</td>
+                <td id="total-SAR">0</td>
+                <td id="total-PKR">0</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div id="collectionMessage"></div>
+
+        <div class="actions">
+          <button id="saveCollectionBtn" onclick="saveCollection()">Save Collection</button>
+          <button class="secondary" onclick="loadCollection()">Refresh</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CURRENCY LEDGER -->
+    <section id="ledgerPage" class="hidden">
+      <div class="card">
+        <h3>Currency Account Ledger</h3>
+
+        <label>Select Account</label>
+        <select id="accountSelect" onchange="loadLedger()">
+          <option value="">Loading accounts...</option>
+        </select>
+
+        <div id="ledgerBalance" class="balance-card" style="margin-top:15px">
+          Balance: —
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Record a Transaction</h3>
+
+        <div class="form-grid">
+          <div>
+            <label>Date</label>
+            <input type="date" id="transactionDate">
+          </div>
+
+          <div>
+            <label>Transaction Type</label>
+            <select id="transactionDirection">
+              <option value="receive">Receive</option>
+              <option value="send">Send</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Amount</label>
+            <input type="number" id="transactionAmount" min="0.01" step="0.01" placeholder="Enter amount">
+          </div>
+
+          <div>
+            <label>Details</label>
+            <input type="text" id="transactionDetails" placeholder="From shop, customer, China...">
+          </div>
+        </div>
+
+        <div id="transactionMessage"></div>
+        <div class="actions">
+          <button onclick="saveTransaction()">Save Transaction</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Account Transactions</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Receive</th>
+                <th>Send</th>
+                <th>Balance</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="ledgerRows">
+              <tr><td colspan="5">Select an account.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
 </div>
 
-<div class="section">
-<h3>Exchange Center Accounts</h3>
-<div id="accounts" class="grid"></div>
-</div>
-
-<div class="section">
-<h3>Branches</h3>
-<div id="branches" class="grid"></div>
-</div>
-
-<div class="section card">
-<h3>Weekly / Daily Collection</h3>
-<p class="small">Enter all five currencies for one branch or Hameed's own shop.</p>
-
-<form id="collectionForm">
-
-<label>Collection source</label>
-<select id="source" required>
-<option value="">Loading branches...</option>
-</select>
-
-<label>Collection date</label>
-<input id="collectionDate" type="date" required>
-
-<label>AFN – Afghan Afghani</label>
-<input id="AFN" type="number" min="0" step="0.01" value="0">
-
-<label>USD – US Dollar</label>
-<input id="USD" type="number" min="0" step="0.01" value="0">
-
-<label>CNY – Chinese Yuan</label>
-<input id="CNY" type="number" min="0" step="0.01" value="0">
-
-<label>SAR – Saudi Riyal</label>
-<input id="SAR" type="number" min="0" step="0.01" value="0">
-
-<label>PKR – Pakistani Rupee</label>
-<input id="PKR" type="number" min="0" step="0.01" value="0">
-
-<label>Details (optional)</label>
-<input id="details" type="text" placeholder="Example: Weekly collection">
-
-<button id="saveCollection" type="submit">Save Collection</button>
-<p id="collectionMessage"></p>
-
-</form>
-</div>
-
-<div class="section card">
-  <h3>Deposits – Exchange Center</h3>
-  <p class="small">
-    Deposit collected money into USD, AFN and CNY accounts.
-  </p>
-
-  <div id="pendingDeposits">
-    Loading pending amounts...
-  </div>
-
-  <h3>Record New Deposit</h3>
-
-  <form id="depositForm">
-    <label>Select collection or conversion</label>
-    <select id="depositSource" required>
-      <option value="">Loading...</option>
-    </select>
-
-    <label>Deposit date</label>
-    <input id="depositDate" type="date" required>
-
-    <label>Amount to deposit</label>
-    <input id="depositAmount"
-           type="number"
-           min="0.01"
-           step="0.01"
-           required>
-
-    <label>Details (optional)</label>
-    <input id="depositDetails"
-           type="text"
-           placeholder="Deposit details">
-
-    <button id="saveDeposit" type="submit">
-      Save Deposit
-    </button>
-
-    <p id="depositMessage"></p>
-  </form>
-</div>
-
-<div class="section card">
-<h3>Recent Collections</h3>
-<div id="recentCollections">Loading...</div>
-</div>
-
-<div class="card">
-<h3>System Status</h3>
-<p id="status">Loading...</p>
-</div>
-
-</section>
-</main>
+<footer>Shop Currency Management</footer>
 
 <script type="module">
 import { createClient } from
@@ -166,531 +234,498 @@ const SUPABASE_KEY =
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const loginSection = document.getElementById('login');
-const dashboard = document.getElementById('dashboard');
-const errorBox = document.getElementById('error');
-const message = document.getElementById('message');
-const collectionMessage =
-document.getElementById('collectionMessage');
+let branches = [];
+let accounts = [];
+let currencies = ['AFN','USD','CNY','SAR','PKR'];
 
-let branchRows = [];
+const $ = id => document.getElementById(id);
 
-function today() {
+function today(){
   const d = new Date();
-  const local = new Date(
-    d.getTime() - d.getTimezoneOffset() * 60000
-  );
-  return local.toISOString().slice(0, 10);
+  const offset = d.getTimezoneOffset();
+  return new Date(d.getTime() - offset * 60000)
+    .toISOString().slice(0,10);
 }
 
-document.getElementById('collectionDate').value = today();
-
-// DEPOSITS MODULE
-
-document.getElementById('depositDate').value = today();
-
-let depositSources = [];
-
-async function loadDeposits() {
-  const box = document.getElementById('pendingDeposits');
-  const select = document.getElementById('depositSource');
-
-  box.textContent = 'Loading pending amounts...';
-  select.innerHTML = '<option value="">Select source</option>';
-  depositSources = [];
-
-  const { data: collections, error: cError } =
-    await supabase.from('collections')
-    .select('*');
-
-  if (cError) {
-    box.textContent = cError.message;
-    return;
-  }
-
-  const { data: items, error: iError } =
-    await supabase.from('collection_items')
-    .select('id,collection_id,currency_code,amount,deposit_items(amount)');
-
-  if (iError) {
-    box.textContent = iError.message;
-    return;
-  }
-
-  const { data: conversions, error: vError } =
-    await supabase.from('currency_conversions')
-    .select('id,collection_item_id,target_currency,target_amount,deposit_items(amount)');
-
-  if (vError) {
-    box.textContent = vError.message;
-    return;
-  }
-
-  function sourceName(collection) {
-    if (!collection) return 'Unknown source';
-
-    if (collection.source_type === 'own_shop') {
-      return "Hameed's Own Shop";
-    }
-
-    const branch = branchRows.find(
-      b => b.id === collection.branch_id
-    );
-
-    return branch ? branch.name : 'Branch';
-  }
-
-  items.forEach(item => {
-    if (!['USD', 'AFN', 'CNY'].includes(item.currency_code)) {
-      return;
-    }
-
-    const deposited = (item.deposit_items || [])
-      .reduce((sum, d) => sum + Number(d.amount), 0);
-
-    const pending = Number(item.amount) - deposited;
-
-    if (pending <= 0) return;
-
-    const collection = collections.find(
-      c => c.id === item.collection_id
-    );
-
-    depositSources.push({
-      type: 'collection',
-      id: item.id,
-      currency: item.currency_code,
-      pending,
-      label: sourceName(collection) + ' | ' +
-        (collection?.collection_date || '') + ' | ' +
-        item.currency_code
-    });
+function number(value){
+  return Number(value || 0).toLocaleString('en-US',{
+    maximumFractionDigits:2
   });
-
-  conversions.forEach(item => {
-    if (!['USD', 'AFN', 'CNY'].includes(item.target_currency)) {
-      return;
-    }
-
-    const deposited = (item.deposit_items || [])
-      .reduce((sum, d) => sum + Number(d.amount), 0);
-
-    const pending = Number(item.target_amount) - deposited;
-
-    if (pending <= 0) return;
-
-    const original = items.find(
-      i => i.id === item.collection_item_id
-    );
-
-    const collection = collections.find(
-      c => c.id === original?.collection_id
-    );
-
-    depositSources.push({
-      type: 'conversion',
-      id: item.id,
-      currency: item.target_currency,
-      pending,
-      label: sourceName(collection) + ' | Converted | ' +
-        item.target_currency
-    });
-  });
-
-  box.innerHTML = '';
-
-  const totals = { USD: 0, AFN: 0, CNY: 0 };
-
-  depositSources.forEach(item => {
-    totals[item.currency] += item.pending;
-
-    const option = document.createElement('option');
-    option.value = item.type + '|' + item.id;
-    option.textContent =
-      item.label + ' | Pending: ' +
-      item.pending.toLocaleString();
-
-    select.appendChild(option);
-  });
-
-  Object.keys(totals).forEach(currency => {
-    const row = document.createElement('p');
-    row.textContent =
-      currency + ' pending: ' +
-      totals[currency].toLocaleString() + ' ' + currency;
-    box.appendChild(row);
-  });
-
-  if (depositSources.length === 0) {
-    box.textContent = 'No amounts currently available for deposit.';
-  }
 }
 
-document.getElementById('depositSource')
-.addEventListener('change', () => {
-  const selected = depositSources.find(
-    item => item.type + '|' + item.id ===
-      document.getElementById('depositSource').value
-  );
-
-  const amount = document.getElementById('depositAmount');
-
-  if (selected) {
-    amount.max = selected.pending;
-    amount.placeholder =
-      'Maximum: ' + selected.pending;
-  } else {
-    amount.removeAttribute('max');
-    amount.placeholder = '';
-  }
-});
-
-document.getElementById('depositForm')
-.addEventListener('submit', async event => {
-  event.preventDefault();
-
-  const button = document.getElementById('saveDeposit');
-  const message = document.getElementById('depositMessage');
-
-  const selected = depositSources.find(
-    item => item.type + '|' + item.id ===
-      document.getElementById('depositSource').value
-  );
-
-  const amount = Number(
-    document.getElementById('depositAmount').value
-  );
-
-  if (!selected || amount <= 0 || amount > selected.pending) {
-    message.textContent = 'Please select a valid amount.';
-    return;
-  }
-
-  button.disabled = true;
-  button.textContent = 'Saving...';
-  message.textContent = '';
-
-  const { error } = await supabase.rpc('record_deposit', {
-    p_source_type: selected.type,
-    p_source_id: selected.id,
-    p_amount: amount,
-    p_deposit_date:
-      document.getElementById('depositDate').value,
-    p_details:
-      document.getElementById('depositDetails').value.trim()
-  });
-
-  if (error) {
-    message.textContent = 'Error: ' + error.message;
-  } else {
-    message.textContent = 'Deposit saved successfully!';
-
-    document.getElementById('depositAmount').value = '';
-    document.getElementById('depositDetails').value = '';
-
-    await loadDashboard();
-  }
-
-  button.disabled = false;
-  button.textContent = 'Save Deposit';
-});
-  
-async function loadDashboard() {
-  message.textContent = 'Loading dashboard...';
-
-  const { data: accounts, error: accountError } =
-    await supabase.from('accounts').select('*');
-
-  if (accountError) {
-    message.textContent = accountError.message;
-    return;
-  }
-
-  const { data: transactions, error: transactionError } =
-    await supabase.from('account_transactions')
-    .select('account_id,direction,amount');
-
-  if (transactionError) {
-    message.textContent = transactionError.message;
-    return;
-  }
-
-  const accountBox = document.getElementById('accounts');
-  accountBox.innerHTML = '';
-
-  accounts.forEach(account => {
-    let balance = 0;
-
-    transactions.forEach(t => {
-      if (t.account_id === account.id) {
-        balance += t.direction === 'receive'
-          ? Number(t.amount)
-          : -Number(t.amount);
-      }
-    });
-
-    const card = document.createElement('div');
-    card.className = 'card';
-
-    const title = document.createElement('h3');
-    title.textContent = account.account_name;
-
-    const amount = document.createElement('div');
-    amount.className = 'balance';
-    amount.textContent =
-      balance.toLocaleString() + ' ' + account.currency_code;
-
-    card.append(title, amount);
-    accountBox.appendChild(card);
-  });
-
-  const { data: branches, error: branchError } =
-    await supabase.from('branches').select('*');
-
-  if (branchError) {
-    message.textContent = branchError.message;
-    return;
-  }
-
-  branchRows = branches;
-
-  const branchBox = document.getElementById('branches');
-  branchBox.innerHTML = '';
-
-  branches.forEach(branch => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.textContent = branch.name;
-    branchBox.appendChild(card);
-  });
-
-  const source = document.getElementById('source');
-  source.innerHTML = '';
-
-  const own = document.createElement('option');
-  own.value = 'own_shop';
-  own.textContent = "Hameed's Own Shop";
-  source.appendChild(own);
-
-  branches.forEach(branch => {
-    const option = document.createElement('option');
-    option.value = branch.id;
-    option.textContent = branch.name;
-    source.appendChild(option);
-  });
-
-  await loadRecentCollections();
-
-  document.getElementById('status').textContent =
-    'Connected. ' + accounts.length +
-    ' accounts and ' + branches.length + ' branches loaded.';
-
-  message.textContent = 'Dashboard updated successfully.';
+function showMessage(id,message,type='success'){
+  $(id).innerHTML =
+    `<div class="message ${type}">${message}</div>`;
 }
 
-async function loadRecentCollections() {
-  const box = document.getElementById('recentCollections');
+function clearMessage(id){
+  $(id).innerHTML = '';
+}
 
-  const { data, error } = await supabase
+function escapeHtml(value){
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  })[char]);
+}
+
+window.showPage = function(page){
+  ['dashboard','collection','ledger'].forEach(name=>{
+    $(name+'Page').classList.toggle('hidden',name !== page);
+  });
+
+  if(page === 'dashboard') loadDashboard();
+  if(page === 'collection') loadCollection();
+  if(page === 'ledger') loadLedger();
+};
+
+window.login = async function(){
+  const email = $('email').value.trim();
+  const password = $('password').value;
+
+  if(!email || !password){
+    showMessage('loginMessage','Enter your email and password.','error');
+    return;
+  }
+
+  $('loginBtn').disabled = true;
+
+  const {error} = await supabase.auth.signInWithPassword({
+    email,password
+  });
+
+  $('loginBtn').disabled = false;
+
+  if(error){
+    showMessage('loginMessage',escapeHtml(error.message),'error');
+    return;
+  }
+
+  await startApp();
+};
+
+window.logout = async function(){
+  await supabase.auth.signOut();
+  $('app').classList.add('hidden');
+  $('loginSection').classList.remove('hidden');
+};
+
+async function startApp(){
+  $('loginSection').classList.add('hidden');
+  $('app').classList.remove('hidden');
+
+  const {data:{user}} = await supabase.auth.getUser();
+  $('welcomeText').textContent =
+    user?.email || 'Administrator';
+
+  $('collectionDate').value = today();
+  $('transactionDate').value = today();
+
+  await loadBranches();
+  await loadAccounts();
+  buildCollectionRows();
+  await loadDashboard();
+  await loadCollection();
+}
+
+async function loadBranches(){
+  const {data,error} = await supabase
+    .from('branches')
+    .select('id,name')
+    .order('name');
+
+  if(error){
+    console.error(error);
+    return;
+  }
+
+  branches = data || [];
+}
+
+async function loadAccounts(){
+  const {data,error} = await supabase
+    .from('accounts')
+    .select('id,currency_code,account_name')
+    .order('currency_code');
+
+  if(error){
+    console.error(error);
+    return;
+  }
+
+  accounts = data || [];
+
+  $('accountSelect').innerHTML = accounts.map(account=>
+    `<option value="${account.id}">
+      ${escapeHtml(account.account_name || account.currency_code)}
+    </option>`
+  ).join('');
+
+  if(accounts.length) $('accountSelect').value = accounts[0].id;
+}
+
+function buildCollectionRows(){
+  const rows = [
+    ...branches.map(branch=>({
+      key:'branch-'+branch.id,
+      name:branch.name,
+      source:'branch',
+      branchId:branch.id
+    })),
+    {
+      key:'own-shop',
+      name:"Hameed (Own Shop)",
+      source:'own_shop',
+      branchId:null
+    }
+  ];
+
+  $('collectionRows').innerHTML = rows.map(row=>`
+    <tr data-key="${row.key}">
+      <td>${escapeHtml(row.name)}</td>
+      ${currencies.map(currency=>`
+        <td>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            class="collection-input"
+            data-source="${row.key}"
+            data-currency="${currency}"
+            placeholder="0"
+            oninput="calculateTotals()"
+          >
+        </td>
+      `).join('')}
+    </tr>
+  `).join('');
+}
+
+window.calculateTotals = function(){
+  currencies.forEach(currency=>{
+    let total = 0;
+
+    document.querySelectorAll(
+      `.collection-input[data-currency="${currency}"]`
+    ).forEach(input=>{
+      total += Number(input.value || 0);
+    });
+
+    $('total-'+currency).textContent = number(total);
+  });
+};
+
+window.loadCollection = async function(){
+  if(!branches.length && !accounts.length) return;
+
+  const date = $('collectionDate').value;
+  if(!date) return;
+
+  clearMessage('collectionMessage');
+  $('saveCollectionBtn').disabled = true;
+
+  document.querySelectorAll('.collection-input')
+    .forEach(input=>input.value='');
+
+  const {data:records,error} = await supabase
     .from('collections')
-    .select('*')
-    .order('collection_date', { ascending: false })
-    .order('created_at', { ascending: false })
-    .limit(10);
+    .select('id,source_type,branch_id')
+    .eq('collection_date',date);
 
-  if (error) {
-    box.textContent = 'Error: ' + error.message;
+  if(error){
+    showMessage('collectionMessage',escapeHtml(error.message),'error');
     return;
   }
 
-  box.innerHTML = '';
+  if(records && records.length){
+    const ids = records.map(record=>record.id);
 
-  if (!data.length) {
-    box.textContent = 'No collections recorded yet.';
-    return;
-  }
+    const {data:items,error:itemError} = await supabase
+      .from('collection_items')
+      .select('collection_id,currency_code,amount')
+      .in('collection_id',ids);
 
-  data.forEach(item => {
-    const branch = branchRows.find(b => b.id === item.branch_id);
-
-    const row = document.createElement('div');
-    row.className = 'card';
-
-    const title = document.createElement('strong');
-    title.textContent = item.source_type === 'own_shop'
-      ? "Hameed's Own Shop"
-      : (branch ? branch.name : 'Branch');
-
-    const date = document.createElement('p');
-    date.textContent = 'Date: ' + item.collection_date;
-
-    row.append(title, date);
-    box.appendChild(row);
-  });
-}
-
-await loadDeposits();
-
-document.getElementById('collectionForm')
-.addEventListener('submit', async event => {
-  event.preventDefault();
-
-  const button = document.getElementById('saveCollection');
-  button.disabled = true;
-  button.textContent = 'Saving...';
-  collectionMessage.textContent = '';
-
-  const selectedSource =
-    document.getElementById('source').value;
-
-  if (!selectedSource) {
-    collectionMessage.textContent = 'Select a collection source.';
-    button.disabled = false;
-    button.textContent = 'Save Collection';
-    return;
-  }
-
-  const currencies = ['AFN', 'USD', 'CNY', 'SAR', 'PKR'];
-  const items = [];
-
-  for (const currency of currencies) {
-    const amount = Number(
-      document.getElementById(currency).value
-    );
-
-    if (!Number.isFinite(amount) || amount < 0) {
-      collectionMessage.textContent =
-        'Enter valid non-negative amounts.';
-      button.disabled = false;
-      button.textContent = 'Save Collection';
+    if(itemError){
+      showMessage('collectionMessage',escapeHtml(itemError.message),'error');
       return;
     }
 
-    if (amount > 0) {
-      items.push({
-        currency_code: currency,
-        amount: amount
+    records.forEach(record=>{
+      let key = record.source_type === 'own_shop'
+        ? 'own-shop'
+        : 'branch-'+record.branch_id;
+
+      (items || []).filter(item=>
+        item.collection_id === record.id
+      ).forEach(item=>{
+        const input = document.querySelector(
+          `.collection-input[data-source="${key}"][data-currency="${item.currency_code}"]`
+        );
+
+        if(input) input.value = item.amount;
       });
+    });
+
+    showMessage(
+      'collectionMessage',
+      'This date already has a saved collection. It is displayed below; choose another date to record a new collection.'
+    );
+    $('saveCollectionBtn').disabled = true;
+  }else{
+    $('saveCollectionBtn').disabled = false;
+  }
+
+  calculateTotals();
+};
+
+window.saveCollection = async function(){
+  const date = $('collectionDate').value;
+
+  if(!date){
+    showMessage('collectionMessage','Select a collection date.','error');
+    return;
+  }
+
+  $('saveCollectionBtn').disabled = true;
+  clearMessage('collectionMessage');
+
+  const {data:existing,error:checkError} = await supabase
+    .from('collections')
+    .select('id')
+    .eq('collection_date',date)
+    .limit(1);
+
+  if(checkError){
+    showMessage('collectionMessage',escapeHtml(checkError.message),'error');
+    $('saveCollectionBtn').disabled = false;
+    return;
+  }
+
+  if(existing && existing.length){
+    showMessage('collectionMessage','A collection is already saved for this date.','error');
+    return;
+  }
+
+  const sources = [
+    ...branches.map(branch=>({
+      key:'branch-'+branch.id,
+      source_type:'branch',
+      branch_id:branch.id
+    })),
+    {
+      key:'own-shop',
+      source_type:'own_shop',
+      branch_id:null
+    }
+  ];
+
+  const records = [];
+
+  for(const source of sources){
+    const items = currencies.map(currency=>{
+      const input = document.querySelector(
+        `.collection-input[data-source="${source.key}"][data-currency="${currency}"]`
+      );
+      return {
+        currency_code:currency,
+        amount:Number(input?.value || 0)
+      };
+    }).filter(item=>item.amount > 0);
+
+    if(items.length){
+      records.push({...source,items});
     }
   }
 
-  if (items.length === 0) {
-    collectionMessage.textContent =
-      'Enter at least one amount greater than zero.';
-    button.disabled = false;
-    button.textContent = 'Save Collection';
+  if(!records.length){
+    showMessage('collectionMessage','Enter at least one amount.','error');
+    $('saveCollectionBtn').disabled = false;
     return;
   }
 
-  const isOwnShop = selectedSource === 'own_shop';
-
-  const collection = {
-    collection_date:
-      document.getElementById('collectionDate').value,
-    source_type: isOwnShop ? 'own_shop' : 'branch',
-    branch_id: isOwnShop ? null : selectedSource,
-    details: document.getElementById('details').value.trim()
-  };
-
-  const { data: saved, error: saveError } = await supabase
-    .from('collections')
-    .insert(collection)
-    .select()
-    .single();
-
-  if (saveError) {
-    collectionMessage.textContent =
-      'Could not save: ' + saveError.message;
-    button.disabled = false;
-    button.textContent = 'Save Collection';
-    return;
-  }
-
-  const records = items.map(item => ({
-    collection_id: saved.id,
-    currency_code: item.currency_code,
-    amount: item.amount
+  const collectionRows = records.map(record=>({
+    collection_date:date,
+    source_type:record.source_type,
+    branch_id:record.branch_id,
+    details:record.source_type === 'own_shop'
+      ? 'Hameed Own Shop'
+      : 'Branch collection'
   }));
 
-  const { error: itemsError } = await supabase
+  const {data:saved,error} = await supabase
+    .from('collections')
+    .insert(collectionRows)
+    .select('id');
+
+  if(error){
+    showMessage('collectionMessage',escapeHtml(error.message),'error');
+    $('saveCollectionBtn').disabled = false;
+    return;
+  }
+
+  const itemRows = [];
+
+  records.forEach((record,index)=>{
+    record.items.forEach(item=>{
+      itemRows.push({
+        collection_id:saved[index].id,
+        currency_code:item.currency_code,
+        amount:item.amount
+      });
+    });
+  });
+
+  const {error:itemError} = await supabase
     .from('collection_items')
-    .insert(records);
+    .insert(itemRows);
 
-  if (itemsError) {
-    collectionMessage.textContent =
-      'Collection record was created, but its currency amounts failed to save. Do not submit it again. Error: ' +
-      itemsError.message;
-    button.disabled = false;
-    button.textContent = 'Save Collection';
+  if(itemError){
+    showMessage(
+      'collectionMessage',
+      'Collection records were created, but saving their currency amounts failed: '+escapeHtml(itemError.message),
+      'error'
+    );
     return;
   }
 
-  collectionMessage.textContent =
-    'Collection saved successfully!';
+  showMessage('collectionMessage','Collection saved successfully.');
+  await loadCollection();
+};
 
-  currencies.forEach(currency => {
-    document.getElementById(currency).value = '0';
-  });
+window.loadDashboard = async function(){
+  const results = await Promise.all(accounts.map(async account=>{
+    const {data,error} = await supabase
+      .from('account_transactions')
+      .select('direction,amount')
+      .eq('account_id',account.id);
 
-  document.getElementById('details').value = '';
-  document.getElementById('source').value = '';
-  document.getElementById('collectionDate').value = today();
+    if(error) return {...account,balance:null};
 
-  await loadDashboard();
+    const balance = (data || []).reduce((total,row)=>
+      total + (row.direction === 'receive'
+        ? Number(row.amount)
+        : -Number(row.amount)),0);
 
-  button.disabled = false;
-  button.textContent = 'Save Collection';
-});
+    return {...account,balance};
+  }));
 
-document.getElementById('loginForm')
-.addEventListener('submit', async event => {
-  event.preventDefault();
+  $('dashboardBalances').innerHTML = results.map(account=>`
+    <div class="balance-card">
+      <small>${escapeHtml(account.account_name || account.currency_code)}</small>
+      <h2>${account.balance === null ? 'Error' : number(account.balance)}</h2>
+      <small>${escapeHtml(account.currency_code)}</small>
+    </div>
+  `).join('') || 'No accounts found.';
+};
 
-  const button = document.getElementById('loginButton');
-  button.disabled = true;
-  button.textContent = 'Logging in...';
-  errorBox.textContent = '';
+window.loadLedger = async function(){
+  const accountId = $('accountSelect').value;
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email: document.getElementById('email').value,
-    password: document.getElementById('password').value
-  });
-
-  button.disabled = false;
-  button.textContent = 'Login';
-
-  if (error) {
-    errorBox.textContent = error.message;
+  if(!accountId){
+    $('ledgerRows').innerHTML =
+      '<tr><td colspan="5">No account selected.</td></tr>';
     return;
   }
 
-  await showDashboard();
-});
+  const account = accounts.find(item=>item.id === accountId);
+  const currency = account?.currency_code || '';
 
-async function showDashboard() {
-  loginSection.style.display = 'none';
-  dashboard.style.display = 'block';
+  const {data,error} = await supabase
+    .from('account_transactions')
+    .select('transaction_date,direction,amount,details,created_at')
+    .eq('account_id',accountId)
+    .order('transaction_date',{ascending:true})
+    .order('created_at',{ascending:true});
+
+  if(error){
+    $('ledgerRows').innerHTML =
+      `<tr><td colspan="5">${escapeHtml(error.message)}</td></tr>`;
+    return;
+  }
+
+  let balance = 0;
+  const rows = (data || []).map(item=>{
+    const amount = Number(item.amount);
+    const receive = item.direction === 'receive' ? amount : 0;
+    const send = item.direction === 'send' ? amount : 0;
+
+    balance += receive - send;
+
+    const date = item.transaction_date
+      ? item.transaction_date.split('-').reverse().join('.')
+      : '';
+
+    return `
+      <tr>
+        <td>${escapeHtml(date)}</td>
+        <td>${receive ? number(receive) : '—'}</td>
+        <td>${send ? number(send) : '—'}</td>
+        <td><b>${number(balance)}</b></td>
+        <td>${escapeHtml(item.details || '')}</td>
+      </tr>
+    `;
+  });
+
+  $('ledgerRows').innerHTML = rows.reverse().join('') ||
+    '<tr><td colspan="5">No transactions recorded yet.</td></tr>';
+
+  $('ledgerBalance').innerHTML =
+    `<small>${escapeHtml(currency)} Account Balance</small>
+     <h2>${number(balance)} ${escapeHtml(currency)}</h2>`;
+};
+
+window.saveTransaction = async function(){
+  const accountId = $('accountSelect').value;
+  const date = $('transactionDate').value;
+  const direction = $('transactionDirection').value;
+  const amount = Number($('transactionAmount').value);
+  const details = $('transactionDetails').value.trim();
+
+  if(!accountId || !date || !amount || amount <= 0){
+    showMessage('transactionMessage','Select an account, date, and valid amount.','error');
+    return;
+  }
+
+  const {error} = await supabase
+    .from('account_transactions')
+    .insert({
+      account_id:accountId,
+      transaction_date:date,
+      direction:direction,
+      amount:amount,
+      transaction_type:direction === 'receive' ? 'deposit' : 'payment',
+      details:details || null
+    });
+
+  if(error){
+    showMessage('transactionMessage',escapeHtml(error.message),'error');
+    return;
+  }
+
+  $('transactionAmount').value = '';
+  $('transactionDetails').value = '';
+  showMessage('transactionMessage','Transaction saved successfully.');
+
+  await loadLedger();
   await loadDashboard();
+};
+
+const {data:{session}} = await supabase.auth.getSession();
+
+if(session){
+  await startApp();
 }
 
-document.getElementById('refreshButton')
-.addEventListener('click', loadDashboard);
-
-document.getElementById('logoutButton')
-.addEventListener('click', async () => {
-  await supabase.auth.signOut();
-  dashboard.style.display = 'none';
-  loginSection.style.display = 'block';
-  document.getElementById('password').value = '';
+supabase.auth.onAuthStateChange((event,session)=>{
+  if(event === 'SIGNED_OUT'){
+    $('app').classList.add('hidden');
+    $('loginSection').classList.remove('hidden');
+  }
 });
-
-const { data: sessionData } =
-await supabase.auth.getSession();
-
-if (sessionData.session) {
-  await showDashboard();
-}
 </script>
 
 </body>
-</html>
+  </html>
