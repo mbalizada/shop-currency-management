@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shop Currency Management</title>
+<meta name="theme-color" content="#10243e">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --navy:#10243e;--navy2:#173657;--blue:#2563eb;--bg:#f3f6fb;--surface:#fff;
+  --text:#172033;--muted:#718096;--line:#e5eaf1;--green:#138a58;--green-bg:#e8f7ef;
+  --red:#d14343;--red-bg:#fff0f0;--gold:#b7791f;--shadow:0 8px 28px rgba(16,36,62,.07);
+  --radius:16px
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;font-size:14px}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.app{min-height:100vh}
+.sidebar{position:fixed;inset:0 auto 0 0;width:238px;background:var(--navy);color:#fff;padding:25px 16px;display:flex;flex-direction:column;z-index:10}
+.brand{display:flex;align-items:center;gap:11px;padding:0 9px 30px}
+.brand-mark{width:39px;height:39px;border-radius:12px;background:#2d6cdf;display:grid;place-items:center;font-weight:800;font-size:19px}
+.brand strong{display:block;font-size:15px;letter-spacing:.2px}
+.brand small{color:#a9bbcf;font-size:11px}
+.nav-label{padding:10px 12px;color:#8fa5bd;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.3px}
+.nav-btn{border:0;background:transparent;color:#c5d2e0;width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:12px 13px;border-radius:10px;margin:3px 0;font-weight:600}
+.nav-btn .ico{width:20px;text-align:center;font-size:16px}
+.nav-btn:hover,.nav-btn.active{background:#244665;color:#fff}
+.sidebar-bottom{margin-top:auto;padding:15px 10px 0;border-top:1px solid #2a435e;color:#a9bbcf;font-size:12px;line-height:1.6}
+.main{margin-left:238px;min-height:100vh}
+.topbar{height:76px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 34px;position:sticky;top:0;z-index:5}
+.topbar h1{font-size:19px;margin:0;font-weight:750}
+.topbar p{margin:4px 0 0;color:var(--muted);font-size:12px}
+.user-area{display:flex;align-items:center;gap:12px}
+.avatar{width:36px;height:36px;border-radius:50%;background:#e8efff;color:#2458b8;display:grid;place-items:center;font-weight:800}
+.user-label{font-size:12px;font-weight:700}
+.logout{border:1px solid var(--line);background:#fff;color:#42536a;padding:8px 12px;border-radius:9px;font-size:12px}
+.content{max-width:1440px;margin:0 auto;padding:28px 34px 48px}
+.page{display:none}.page.active{display:block}
+.page-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:22px}
+.page-heading h2{font-size:21px;margin:0 0 6px}
+.page-heading p{color:var(--muted);margin:0;font-size:13px}
+.grid{display:grid;gap:16px}
+.balance-grid{grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+.balance-card{position:relative;overflow:hidden}
+.balance-card:after{content:"";position:absolute;width:95px;height:95px;border-radius:50%;right:-30px;top:-35px;background:var(--tint)}
+.balance-top{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1}
+.currency-chip{padding:6px 9px;border-radius:8px;background:var(--tint);color:var(--accent);font-size:11px;font-weight:800}
+.balance-card .label{color:var(--muted);font-size:12px;font-weight:600}
+.balance-amount{font-size:clamp(22px,2.4vw,29px);font-weight:800;margin:15px 0 5px;letter-spacing:-.6px;overflow-wrap:anywhere}
+.balance-foot{font-size:11px;color:var(--muted)}
+.section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}
+.section-title h3{margin:0;font-size:15px}
+.section-title small{color:var(--muted)}
+.two-col{grid-template-columns:1.25fr .75fr}
+.stat-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.mini-stat{padding:15px;border-radius:12px;background:#f7f9fc;border:1px solid var(--line)}
+.mini-stat span{display:block;color:var(--muted);font-size:11px;margin-bottom:7px}
+.mini-stat strong{font-size:19px}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:7px}
+.field.full{grid-column:1/-1}
+.field label{font-size:12px;color:#536176;font-weight:700}
+.field input,.field select{width:100%;height:42px;border:1px solid #dce3ed;border-radius:9px;background:#fff;padding:0 12px;color:var(--text);outline:none}
+.field input:focus,.field select:focus{border-color:#7aa5f7;box-shadow:0 0 0 3px #eaf1ff}
+.currency-inputs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.currency-inputs .field input{font-weight:700}
+.btn{border:0;border-radius:9px;padding:11px 16px;font-weight:700;font-size:12px;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:#1d4ed8}
+.btn-light{background:#eef3fa;color:#34465d}
+.btn-danger{background:#fff0f0;color:var(--red)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px;flex-wrap:wrap}
+.month-control{display:flex;align-items:center;gap:9px}
+.month-control label{font-size:12px;color:var(--muted);font-weight:700}
+.month-control input{height:38px;border:1px solid var(--line);border-radius:9px;padding:0 10px;background:#fff}
+.table-wrap{width:100%;overflow:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;min-width:680px;background:#fff}
+th{background:#f6f8fb;color:#65748a;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.55px;padding:12px 13px;white-space:nowrap}
+td{padding:12px 13px;border-top:1px solid #edf0f5;font-size:12px;white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.week-row td{background:#edf3fc;color:#173657;font-weight:800;padding:11px 13px}
+.shop-name{font-weight:700;color:#34445a}
+.subtotal td{background:#f7f9fc;font-weight:800;color:#30435c}
+.total-row td{background:#eaf1ff;font-weight:800;color:#173e83;border-top:2px solid #cbdcff}
+.muted{color:var(--muted)}
+.empty{text-align:center;color:var(--muted);padding:30px!important}
+.ledger-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.account-pick{border:1px solid var(--line);border-radius:12px;padding:15px;background:#fff;text-align:left}
+.account-pick.active{border-color:#75a0f4;box-shadow:0 0 0 3px #eaf1ff}
+.account-pick span{display:block;color:var(--muted);font-size:11px;margin-bottom:7px}
+.account-pick strong{font-size:19px}
+.account-pick small{display:block;color:#536176;margin-top:5px;font-weight:800}
+.receive{color:var(--green);font-weight:800}.send{color:var(--red);font-weight:800}
+.pill{display:inline-block;padding:4px 7px;border-radius:6px;font-size:10px;font-weight:800}
+.pill.receive{background:var(--green-bg)}.pill.send{background:var(--red-bg)}
+.notice{padding:11px 13px;border-radius:10px;font-size:12px;margin-bottom:14px;display:none}
+.notice.show{display:block}.notice.success{background:var(--green-bg);color:#116b45}.notice.error{background:var(--red-bg);color:#a52d2d}
+.login-screen{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(135deg,#10243e,#1d4770)}
+.login-card{background:#fff;width:min(420px,100%);padding:34px;border-radius:20px;box-shadow:0 20px 60px #07182c55}
+.login-brand{text-align:center;margin-bottom:26px}
+.login-brand .brand-mark{margin:0 auto 12px;width:48px;height:48px}
+.login-brand h1{font-size:21px;margin:0 0 6px}.login-brand p{color:var(--muted);font-size:12px;margin:0}
+.login-card .field{margin-bottom:15px}
+.login-card .btn{width:100%;height:44px;margin-top:5px}
+.login-error{color:var(--red);font-size:12px;margin:10px 0 0;min-height:16px}
+.mobile-nav{display:none}
+.loading{color:var(--muted);font-size:12px;padding:15px 0}
+@media(max-width:1000px){
+ .sidebar{width:205px}.main{margin-left:205px}.content{padding:24px 22px}
+ .balance-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.currency-inputs{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .two-col{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+ .sidebar{display:none}.main{margin:0}.topbar{height:66px;padding:0 15px}.topbar h1{font-size:16px}.topbar p{font-size:10px}
+ .user-label{display:none}.content{padding:19px 13px 90px}
+ .page-heading h2{font-size:19px}.balance-grid{grid-template-columns:1fr;gap:10px}
+ .balance-card{padding:16px}.balance-amount{font-size:25px;margin:9px 0 3px}
+ .currency-inputs{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}
+ .ledger-summary{grid-template-columns:1fr}
+ .mobile-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:20;padding:7px 5px calc(7px + env(safe-area-inset-bottom));justify-content:space-around}
+ .mobile-nav button{border:0;background:transparent;color:#758399;font-size:10px;font-weight:700;display:flex;flex-direction:column;gap:4px;align-items:center;min-width:0}
+ .mobile-nav button.active{color:#245dc5}.mobile-nav .ico{font-size:18px}
+ .topbar{position:static}.toolbar{align-items:flex-start}.month-control{width:100%;justify-content:space-between}.month-control input{flex:1;max-width:190px}
+ .card{padding:15px}.page-heading{margin-bottom:17px}
+}
+</style>
+</head>
+<body>
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="brand-mark">SC</div>
+      <h1>Shop Currency Management</h1>
+      <p>Secure administrator access</p>
+    </div>
+    <form id="loginForm">
+      <div class="field"><label for="email">Email address</label><input id="email" type="email" autocomplete="username" required placeholder="Admin email"></div>
+      <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required placeholder="Enter password"></div>
+      <button class="btn btn-primary" id="loginBtn" type="submit">Sign in</button>
+      <p id="loginError" class="login-error"></p>
+    </form>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">SC</div><div><strong>Currency Manager</strong><small>Business dashboard</small></div></div>
+    <div class="nav-label">Workspace</div>
+    <button class="nav-btn active" data-page="dashboard"><span class="ico">▦</span>Dashboard</button>
+    <button class="nav-btn" data-page="collections"><span class="ico">▤</span>Weekly Collection</button>
+    <button class="nav-btn" data-page="accounts"><span class="ico">⇄</span>Currency Accounts</button>
+    <div class="sidebar-bottom">Shop Currency Management<br><span>Private administrator workspace</span></div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div><h1 id="topTitle">Dashboard</h1><p id="topSubtitle">A clear view of your business finances</p></div>
+      <div class="user-area"><div class="avatar">A</div><span class="user-label">Administrator</span><button class="logout" id="logoutBtn">Sign out</button></div>
+    </header>
+    <div class="content">
+      <section id="dashboard" class="page active">
+        <div class="page-heading"><div><h2>Business overview</h2><p>Your exchange-center account balances and collection activity.</p></div></div>
+        <div id="dashboardBalances" class="grid balance-grid">
+          <div class="card loading">Loading account balances…</div>
+        </div>
+        <div class="grid two-col">
+          <div class="card">
+            <div class="section-title"><h3>This month</h3><small id="dashMonth"></small></div>
+            <div class="stat-row">
+              <div class="mini-stat"><span>Collection records</span><strong id="monthRecords">—</strong></div>
+              <div class="mini-stat"><span>Active shops</span><strong>4</strong></div>
+            </div>
+            <p class="muted" style="font-size:11px;margin:14px 0 0">View the Weekly Collection page for shop-by-shop amounts and weekly totals.</p>
+          </div>
+          <div class="card">
+            <div class="section-title"><h3>Quick actions</h3></div>
+            <div class="actions" style="flex-direction:column;align-items:stretch">
+              <button class="btn btn-primary" data-go="collections">＋ Record shop collection</button>
+              <button class="btn btn-light" data-go="accounts">＋ Add account transaction</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="collections" class="page">
+        <div class="page-heading"><div><h2>Weekly shop collection</h2><p>Review each shop’s collections by week and record daily amounts.</p></div></div>
+        <div id="collectionNotice" class="notice"></div>
+        <div class="card" style="margin-bottom:18px">
+          <div class="toolbar">
+            <div class="section-title" style="margin:0"><h3>Monthly collection report</h3></div>
+            <div class="month-control"><label for="reportMonth">Select month</label><input type="month" id="reportMonth"></div>
+          </div>
+          <div class="table-wrap">
+            <table id="collectionTable">
+              <thead><tr><th>Week / Shop</th><th class="num">AFN</th><th class="num">USD</th><th class="num">CNY</th><th class="num">SAR</th><th class="num">PKR</th></tr></thead>
+              <tbody><tr><td colspan="6" class="empty">Loading monthly report…</td></tr></tbody>
+            </table>
+          </div>
+          <p class="muted" style="font-size:10px;margin:10px 2px 0">Weeks run Sunday to Saturday. The first and last weeks may be partial.</p>
+        </div>
+
+        <div class="card">
+          <div class="section-title"><div><h3>Record shop collection</h3><small class="muted">Enter the amounts received from one shop for one date.</small></div></div>
+          <form id="collectionForm">
+            <div class="form-grid">
+              <div class="field"><label for="collectionDate">Collection date</label><input id="collectionDate" type="date" required></div>
+              <div class="field"><label for="shopSelect">Shop / person</label><select id="shopSelect" required><option value="">Loading shops…</option></select></div>
+              <div class="field full"><label>Amounts by currency</label>
+                <div class="currency-inputs">
+                  <div class="field"><label for="colAFN">AFN</label><input id="colAFN" type="number" min="0" step="0.01" value="0"></div>
+                  <div class="field"><label for="colUSD">USD</label><input id="colUSD" type="number" min="0" step="0.01" value="0"></div>
+                  <div class="field"><label for="colCNY">CNY</label><input id="colCNY" type="number" min="0" step="0.01" value="0"></div>
+                  <div class="field"><label for="colSAR">SAR</label><input id="colSAR" type="number" min="0" step="0.01" value="0"></div>
+                  <div class="field"><label for="colPKR">PKR</label><input id="colPKR" type="number" min="0" step="0.01" value="0"></div>
+                </div>
+              </div>
+              <div class="field full"><label for="collectionDetails">Details (optional)</label><input id="collectionDetails" type="text" maxlength="250" placeholder="Add a note if needed"></div>
+            </div>
+            <div class="actions" style="margin-top:17px"><button class="btn btn-primary" id="saveCollectionBtn" type="submit">Save collection</button><button class="btn btn-light" id="clearCollectionBtn" type="button">Clear form</button></div>
+          </form>
+        </div>
+      </section>
+
+      <section id="accounts" class="page">
+        <div class="page-heading"><div><h2>Currency accounts</h2><p>Track money received and sent from each exchange-center account.</p></div></div>
+        <div id="accountNotice" class="notice"></div>
+        <div id="accountCards" class="ledger-summary"></div>
+        <div class="grid two-col">
+          <div class="card">
+            <div class="section-title"><h3 id="ledgerTitle">AFN account ledger</h3><small>Running balance</small></div>
+            <div class="table-wrap">
+              <table id="ledgerTable">
+                <thead><tr><th>Date</th><th>Details</th><th class="num">Receive</th><th class="num">Send</th><th class="num">Balance</th></tr></thead>
+                <tbody><tr><td colspan="5" class="empty">Loading transactions…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-title"><h3>Add account transaction</h3></div>
+            <form id="transactionForm">
+              <div class="field" style="margin-bottom:13px"><label for="transactionAccount">Currency account</label><select id="transactionAccount" required></select></div>
+              <div class="field" style="margin-bottom:13px"><label for="transactionDate">Date</label><input id="transactionDate" type="date" required></div>
+              <div class="field" style="margin-bottom:13px"><label for="direction">Transaction type</label><select id="direction"><option value="receive">Receive money</option><option value="send">Send money</option></select></div>
+              <div class="field" style="margin-bottom:13px"><label for="transactionAmount">Amount</label><input id="transactionAmount" type="number" min="0.01" step="0.01" required placeholder="Enter amount"></div>
+              <div class="field"><label for="transactionDetails">Details</label><input id="transactionDetails" type="text" maxlength="250" placeholder="e.g. Received from Kabeer" required></div>
+              <button class="btn btn-primary" id="saveTransactionBtn" type="submit" style="width:100%;margin-top:17px">Save transaction</button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <nav class="mobile-nav">
+    <button class="active" data-page="dashboard"><span class="ico">▦</span>Dashboard</button>
+    <button data-page="collections"><span class="ico">▤</span>Collections</button>
+    <button data-page="accounts"><span class="ico">⇄</span>Accounts</button>
+  </nav>
+</div>
+
+<script>
+(() => {
+  const SUPABASE_URL = "https://wayvtnsknotobfjpoddr.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_swDTvd_H_LOxy1NqcKQd6g_bFs14oe1";
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const CURRENCIES = ["AFN","USD","CNY","SAR","PKR"];
+  const ACCOUNT_CURRENCIES = ["AFN","USD","CNY"];
+  const SHOP_ORDER = ["Hameed","Zaman","Kabeer","Satar"];
+  const $ = id => document.getElementById(id);
+  let branches = [];
+  let accounts = [];
+  let selectedAccountId = null;
+  let currentMonthData = [];
+
+  const today = new Date();
+  const isoToday = localISODate(today);
+  $("collectionDate").value = isoToday;
+  $("transactionDate").value = isoToday;
+  $("reportMonth").value = isoToday.slice(0,7);
+  $("dashMonth").textContent = today.toLocaleDateString(undefined,{month:"long",year:"numeric"});
+
+  function localISODate(d){
+    const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+  function money(value){
+    return Number(value||0).toLocaleString(undefined,{maximumFractionDigits:2});
+  }
+  function safe(value){
+    return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+  function showNotice(id,message,type="success"){
+    const el=$(id);el.textContent=message;el.className=`notice show ${type}`;
+    window.setTimeout(()=>el.classList.remove("show"),5000);
+  }
+  function setBusy(button,busy,label){
+    button.disabled=busy;
+    if(busy){button.dataset.oldText=button.textContent;button.textContent=label||"Please wait…";}
+    else{button.textContent=button.dataset.oldText||button.textContent;}
+  }
+  function setPage(page){
+    document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===page));
+    document.querySelectorAll("[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===page));
+    const titles={dashboard:["Dashboard","A clear view of your business finances"],collections:["Weekly Collection","Shop collections and monthly report"],accounts:["Currency Accounts","Receive, send and account balances"]};
+    $("topTitle").textContent=titles[page][0];$("topSubtitle").textContent=titles[page][1];
+    if(page==="dashboard")loadDashboard();
+    if(page==="collections")loadMonthlyReport();
+    if(page==="accounts")loadAccountsAndLedger();
+  }
+  document.querySelectorAll("[data-page]").forEach(b=>b.addEventListener("click",()=>setPage(b.dataset.page)));
+  document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>setPage(b.dataset.go)));
+
+  async function loadBranches(){
+    const {data,error}=await db.from("branches").select("id,name").order("name");
+    if(error)throw error;
+    branches=data||[];
+    const options=[{value:"own_shop",label:"Hameed (Own Shop)"},...branches.map(b=>({value:b.id,label:b.name}))];
+    $("shopSelect").innerHTML='<option value="">Select shop / person</option>'+options.map(o=>`<option value="${safe(o.value)}">${safe(o.label)}</option>`).join("");
+  }
+  async function loadAccounts(){
+    const {data,error}=await db.from("accounts").select("id,currency_code,account_name").order("currency_code");
+    if(error)throw error;
+    accounts=data||[];
+    const ordered=ACCOUNT_CURRENCIES.map(c=>accounts.find(a=>a.currency_code===c)).filter(Boolean);
+    accounts=ordered.concat(accounts.filter(a=>!ACCOUNT_CURRENCIES.includes(a.currency_code)));
+    if(!selectedAccountId && accounts.length)selectedAccountId=accounts[0].id;
+    $("transactionAccount").innerHTML=accounts.map(a=>`<option value="${safe(a.id)}">${safe(a.currency_code)}${a.account_name?" — "+safe(a.account_name):""}</option>`).join("");
+    if(selectedAccountId)$("transactionAccount").value=selectedAccountId;
+  }
+  function accountBalance(accountId,transactions){
+    return transactions.filter(t=>t.account_id===accountId).reduce((sum,t)=>sum+(t.direction==="receive"?Number(t.amount): -Number(t.amount)),0);
+  }
+  async function fetchTransactions(){
+    const {data,error}=await db.from("account_transactions")
+      .select("id,account_id,transaction_date,direction,amount,transaction_type,details,created_at")
+      .order("transaction_date",{ascending:true}).order("created_at",{ascending:true});
+    if(error)throw error;
+    return data||[];
+  }
+  async function loadDashboard(){
+    try{
+      if(!accounts.length)await loadAccounts();
+      const [transactions,collections]=await Promise.all([
+        fetchTransactions(),
+        db.from("collections").select("id,collection_date").gte("collection_date",$("reportMonth").value+"-01").lte("collection_date",monthLastDay($("reportMonth").value))
+      ]);
+      if(collections.error)throw collections.error;
+      renderBalanceCards("dashboardBalances",transactions);
+      $("monthRecords").textContent=(collections.data||[]).length;
+    }catch(e){$("dashboardBalances").innerHTML=`<div class="card muted">Could not load dashboard: ${safe(e.message)}</div>`;}
+  }
+  function renderBalanceCards(containerId,transactions){
+    const colors={AFN:["#e9f7ef","#138a58"],USD:["#eaf1ff","#2563eb"],CNY:["#fff4e5","#b7791f"]};
+    const list=ACCOUNT_CURRENCIES.map(c=>accounts.find(a=>a.currency_code===c)).filter(Boolean);
+    $(containerId).innerHTML=list.map(a=>{
+      const [tint,accent]=colors[a.currency_code]||["#eef3fa","#456"];
+      return `<div class="card balance-card" style="--tint:${tint};--accent:${accent}">
+        <div class="balance-top"><span class="label">${safe(a.account_name||a.currency_code+" account")}</span><span class="currency-chip">${safe(a.currency_code)}</span></div>
+        <div class="balance-amount">${money(accountBalance(a.id,transactions))}</div><div class="balance-foot">Current account balance</div>
+      </div>`;
+    }).join("")||'<div class="card muted">No currency accounts found.</div>';
+  }
+  function monthLastDay(ym){
+    const [y,m]=ym.split("-").map(Number);
+    return localISODate(new Date(y,m,0));
+  }
+  function getMonthWeeks(ym){
+    const [year,month]=ym.split("-").map(Number);
+    const first=new Date(year,month-1,1),last=new Date(year,month,0);
+    const weeks=[];let cursor=new Date(first);
+    while(cursor<=last){
+      const start=new Date(cursor);
+      const end=new Date(cursor);
+      end.setDate(end.getDate()+(6-end.getDay()));
+      if(end>last)end.setTime(last.getTime());
+      weeks.push({start:new Date(start),end:new Date(end)});
+      cursor=new Date(end);cursor.setDate(cursor.getDate()+1);
+    }
+    return weeks;
+  }
+  function dateInRange(date,start,end){return date>=localISODate(start)&&date<=localISODate(end);}
+  function shopLabel(record){
+    if(record.source_type==="own_shop")return "Hameed";
+    return branches.find(b=>String(b.id)===String(record.branch_id))?.name||"Other shop";
+  }
+  async function loadMonthlyReport(){
+    const ym=$("reportMonth").value;
+    if(!ym)return;
+    const tbody=$("collectionTable").querySelector("tbody");
+    tbody.innerHTML='<tr><td colspan="6" class="empty">Loading report…</td></tr>';
+    try{
+      const {data:records,error}=await db.from("collections").select("id,collection_date,source_type,branch_id,details")
+        .gte("collection_date",ym+"-01").lte("collection_date",monthLastDay(ym)).order("collection_date");
+      if(error)throw error;
+      const ids=(records||[]).map(r=>r.id);
+      let items=[];
+      if(ids.length){
+        const result=await db.from("collection_items").select("collection_id,currency_code,amount").in("collection_id",ids);
+        if(result.error)throw result.error;
+        items=result.data||[];
+      }
+      currentMonthData=records||[];
+      $("monthRecords").textContent=String((records||[]).length);
+      const itemMap={};
+      items.forEach(it=>{
+        itemMap[it.collection_id]??={};
+        itemMap[it.collection_id][it.currency_code]=(itemMap[it.collection_id][it.currency_code]||0)+Number(it.amount||0);
+      });
+      const weeks=getMonthWeeks(ym);
+      const monthTotals=Object.fromEntries(CURRENCIES.map(c=>[c,0]));
+      let rows="";
+      weeks.forEach((week,index)=>{
+        const weekRecords=(records||[]).filter(r=>dateInRange(r.collection_date,week.start,week.end));
+        rows+=`<tr class="week-row"><td colspan="6">Week ${index+1} · ${localISODate(week.start)} to ${localISODate(week.end)}</td></tr>`;
+        const weekTotals=Object.fromEntries(CURRENCIES.map(c=>[c,0]));
+        const shops=SHOP_ORDER.map(name=>({name,records:weekRecords.filter(r=>shopLabel(r)===name)}));
+        weekRecords.filter(r=>!SHOP_ORDER.includes(shopLabel(r))).forEach(r=>{
+          const name=shopLabel(r);let entry=shops.find(s=>s.name===name);if(!entry){entry={name,records:[]};shops.push(entry);}entry.records.push(r);
+        });
+        shops.forEach(shop=>{
+          const totals=Object.fromEntries(CURRENCIES.map(c=>[c,0]));
+          shop.records.forEach(r=>CURRENCIES.forEach(c=>totals[c]+=(itemMap[r.id]?.[c]||0)));
+          CURRENCIES.forEach(c=>{weekTotals[c]+=totals[c];monthTotals[c]+=totals[c];});
+          rows+=`<tr><td class="shop-name">${safe(shop.name)}</td>${CURRENCIES.map(c=>`<td class="num">${money(totals[c])}</td>`).join("")}</tr>`;
+        });
+        rows+=`<tr class="subtotal"><td>Week ${index+1} total</td>${CURRENCIES.map(c=>`<td class="num">${money(weekTotals[c])}</td>`).join("")}</tr>`;
+      });
+      rows+=`<tr class="total-row"><td>MONTH TOTAL</td>${CURRENCIES.map(c=>`<td class="num">${money(monthTotals[c])}</td>`).join("")}</tr>`;
+      tbody.innerHTML=rows;
+    }catch(e){tbody.innerHTML=`<tr><td colspan="6" class="empty">Could not load report: ${safe(e.message)}</td></tr>`;}
+  }
+  $("reportMonth").addEventListener("change",()=>{loadMonthlyReport();loadDashboard();});
+
+  $("collectionForm").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const btn=$("saveCollectionBtn");setBusy(btn,true,"Saving…");
+    try{
+      const date=$("collectionDate").value,shop=$("shopSelect").value;
+      if(!shop)throw new Error("Please select a shop.");
+      const isOwn=shop==="own_shop",branchId=isOwn?null:shop;
+      let duplicateQuery=db.from("collections").select("id").eq("collection_date",date).eq("source_type",isOwn?"own_shop":"branch");
+      duplicateQuery=isOwn?duplicateQuery.is("branch_id",null):duplicateQuery.eq("branch_id",branchId);
+      const duplicate=await duplicateQuery.maybeSingle();
+      if(duplicate.error)throw duplicate.error;
+      if(duplicate.data)throw new Error("A collection for this shop and date already exists. Choose another date.");
+      const amounts=CURRENCIES.map(c=>({currency_code:c,amount:Number($("col"+c).value||0)})).filter(x=>x.amount>0);
+      if(!amounts.length)throw new Error("Enter at least one amount.");
+      const {data:header,error:headerError}=await db.from("collections").insert({
+        collection_date:date,source_type:isOwn?"own_shop":"branch",branch_id:branchId,
+        details:$("collectionDetails").value.trim()||null
+      }).select("id").single();
+      if(headerError)throw headerError;
+      const {error:itemError}=await db.from("collection_items").insert(amounts.map(a=>({...a,collection_id:header.id})));
+      if(itemError){
+        await db.from("collections").delete().eq("id",header.id);
+        throw itemError;
+      }
+      showNotice("collectionNotice","Collection saved successfully.");
+      $("collectionForm").reset();$("collectionDate").value=isoToday;
+      CURRENCIES.forEach(c=>$("col"+c).value="0");
+      await loadMonthlyReport();await loadDashboard();
+    }catch(err){showNotice("collectionNotice",err.message||"Could not save collection.","error");}
+    finally{setBusy(btn,false);}
+  });
+  $("clearCollectionBtn").addEventListener("click",()=>{
+    $("collectionForm").reset();$("collectionDate").value=isoToday;
+    CURRENCIES.forEach(c=>$("col"+c).value="0");
+  });
+
+  async function loadAccountsAndLedger(){
+    try{
+      if(!accounts.length)await loadAccounts();
+      const transactions=await fetchTransactions();
+      renderAccountCards(transactions);
+      renderLedger(transactions);
+    }catch(e){
+      $("ledgerTable").querySelector("tbody").innerHTML=`<tr><td colspan="5" class="empty">Could not load accounts: ${safe(e.message)}</td></tr>`;
+    }
+  }
+  function renderAccountCards(transactions){
+    $("accountCards").innerHTML=ACCOUNT_CURRENCIES.map(c=>{
+      const a=accounts.find(x=>x.currency_code===c);if(!a)return "";
+      const active=String(a.id)===String(selectedAccountId);
+      return `<button class="account-pick ${active?"active":""}" data-account="${safe(a.id)}">
+        <span>${safe(a.account_name||c+" account")}</span><strong>${money(accountBalance(a.id,transactions))}</strong><small>${c} · Current balance</small>
+      </button>`;
+    }).join("");
+    $("accountCards").querySelectorAll("[data-account]").forEach(b=>b.addEventListener("click",()=>{
+      selectedAccountId=b.dataset.account;$("transactionAccount").value=selectedAccountId;renderAccountCards(transactions);renderLedger(transactions);
+    }));
+  }
+  function renderLedger(transactions){
+    const account=accounts.find(a=>String(a.id)===String(selectedAccountId));
+    if(!account){$("ledgerTitle").textContent="Account ledger";$("ledgerTable").querySelector("tbody").innerHTML='<tr><td colspan="5" class="empty">No accounts found.</td></tr>';return;}
+    $("ledgerTitle").textContent=account.currency_code+" account ledger";
+    const list=transactions.filter(t=>String(t.account_id)===String(account.id))
+      .sort((a,b)=>(a.transaction_date||"").localeCompare(b.transaction_date||"")||(a.created_at||"").localeCompare(b.created_at||""));
+    let balance=0;
+    const rows=list.map(t=>{
+      const amount=Number(t.amount||0);
+      if(t.direction==="receive")balance+=amount;else balance-=amount;
+      const receive=t.direction==="receive";
+      return `<tr><td>${safe(t.transaction_date)}</td><td>${safe(t.details||"—")}</td>
+        <td class="num ${receive?"receive":""}">${receive?money(amount):"—"}</td>
+        <td class="num ${!receive?"send":""}">${!receive?money(amount):"—"}</td>
+        <td class="num"><strong>${money(balance)}</strong></td></tr>`;
+    });
+    $("ledgerTable").querySelector("tbody").innerHTML=rows.length?rows.reverse().join(""):'<tr><td colspan="5" class="empty">No transactions yet for this account.</td></tr>';
+  }
+  $("transactionAccount").addEventListener("change",async()=>{
+    selectedAccountId=$("transactionAccount").value;await loadAccountsAndLedger();
+  });
+  $("transactionForm").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const btn=$("saveTransactionBtn");setBusy(btn,true,"Saving…");
+    try{
+      const accountId=$("transactionAccount").value;
+      const amount=Number($("transactionAmount").value);
+      if(!accountId||!Number.isFinite(amount)||amount<=0)throw new Error("Enter a valid account and amount.");
+      const {error}=await db.from("account_transactions").insert({
+        account_id:accountId,transaction_date:$("transactionDate").value,
+        direction:$("direction").value,amount,transaction_type:"correction",
+        details:$("transactionDetails").value.trim()
+      });
+      if(error)throw error;
+      selectedAccountId=accountId;
+      $("transactionForm").reset();$("transactionDate").value=isoToday;$("transactionAccount").value=selectedAccountId;
+      showNotice("accountNotice","Transaction saved. Account balance updated.");
+      await loadAccountsAndLedger();await loadDashboard();
+    }catch(err){showNotice("accountNotice",err.message||"Could not save transaction.","error");}
+    finally{setBusy(btn,false);}
+  });
+
+  $("loginForm").addEventListener("submit",async e=>{
+    e.preventDefault();const btn=$("loginBtn");btn.disabled=true;btn.textContent="Signing in…";$("loginError").textContent="";
+    try{
+      const {error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+      if(error)throw error;
+    }catch(err){$("loginError").textContent=err.message||"Sign-in failed.";}
+    finally{btn.disabled=false;btn.textContent="Sign in";}
+  });
+  $("logoutBtn").addEventListener("click",async()=>{
+    const {error}=await db.auth.signOut();if(error)alert(error.message);
+  });
+  async function showApp(){
+    $("loginScreen").classList.add("hidden");$("app").classList.remove("hidden");
+    try{await Promise.all([loadBranches(),loadAccounts()]);await loadDashboard();await loadMonthlyReport();}
+    catch(e){alert("Could not load setup data: "+e.message);}
+  }
+  function showLogin(){$("app").classList.add("hidden");$("loginScreen").classList.remove("hidden");}
+  db.auth.onAuthStateChange((_event,session)=>{
+    if(session){showApp();}else{showLogin();}
+  });
+  db.auth.getSession().then(({data})=>{if(data.session)showApp();else showLogin();});
+})();
+</script>
+</body>
+</html>
