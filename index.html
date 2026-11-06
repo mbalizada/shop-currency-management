@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shop Currency Management</title>
+<meta name="theme-color" content="#10243e">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--navy:#10243e;--blue:#2563eb;--bg:#f3f6fb;--text:#172033;--muted:#718096;--line:#e5eaf1;--green:#138a58;--red:#d14343}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px Arial,sans-serif}button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+.login-screen{min-height:100vh;display:grid;place-items:center;padding:18px;background:linear-gradient(135deg,#10243e,#1d4770)}.login-card{background:#fff;width:min(420px,100%);padding:28px;border-radius:18px}.login-card h1{text-align:center;font-size:21px}.login-card p{text-align:center;color:var(--muted);font-size:12px}
+.app{min-height:100vh}.sidebar{position:fixed;inset:0 auto 0 0;width:225px;background:var(--navy);color:white;padding:22px 14px;display:flex;flex-direction:column;z-index:5}.brand{font-weight:bold;font-size:16px;padding:8px 10px 28px}.nav-btn{border:0;background:transparent;color:#d4dfeb;padding:13px;border-radius:9px;text-align:left;margin:3px 0;font-weight:bold}.nav-btn.active,.nav-btn:hover{background:#244665;color:#fff}.main{margin-left:225px}.topbar{height:70px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 25px;position:sticky;top:0;z-index:4}.topbar h1{font-size:18px;margin:0}.content{max-width:1400px;margin:auto;padding:24px}.page{display:none}.page.active{display:block}.heading{margin-bottom:18px}.heading h2{margin:0 0 5px;font-size:21px}.heading p,.muted{color:var(--muted);font-size:12px}
+.card{background:white;border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 5px 20px #10243e0a}.grid{display:grid;gap:13px}.balances{grid-template-columns:repeat(2,minmax(0,1fr))}.balance{padding:17px}.balance small{color:var(--muted)}.balance strong{display:block;font-size:25px;margin-top:9px;overflow-wrap:anywhere}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field{display:flex;flex-direction:column;gap:6px;min-width:0}.field.full{grid-column:1/-1}.field label{font-size:12px;font-weight:bold;color:#536176}.field input,.field select{width:100%;height:42px;border:1px solid #dce3ed;border-radius:8px;padding:0 10px;background:#fff;min-width:0}.btn{border:0;border-radius:8px;padding:11px 15px;font-weight:bold;font-size:12px}.primary{background:var(--blue);color:white}.light{background:#edf2f8;color:#34465d}.danger{background:#fff0f0;color:var(--red)}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}.notice{display:none;padding:11px;border-radius:8px;margin-bottom:12px;font-size:12px}.notice.show{display:block}.notice.success{background:#e8f7ef;color:#116b45}.notice.error{background:#fff0f0;color:#a52d2d}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:13px}.toolbar input{height:38px;border:1px solid var(--line);border-radius:8px;padding:0 9px}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px}table{width:100%;border-collapse:collapse;min-width:650px;background:white}th{background:#f5f7fb;color:#64748b;font-size:10px;text-transform:uppercase;text-align:left;padding:12px;white-space:nowrap}td{border-top:1px solid #edf0f5;padding:11px 12px;font-size:12px;white-space:nowrap}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}.week-row td{background:#edf3fc;font-weight:bold;color:#173657}.subtotal td{background:#f7f9fc;font-weight:bold}.total-row td{background:#eaf1ff;font-weight:bold;color:#173e83}.shop{font-weight:bold}.empty{text-align:center;color:var(--muted);padding:24px!important}
+.other-row{display:grid;grid-template-columns:minmax(90px,.8fr) minmax(120px,1.2fr) auto;gap:8px;margin-bottom:8px}.other-row input{height:40px;border:1px solid #dce3ed;border-radius:8px;padding:0 9px;min-width:0}.remove-row{border:0;background:#fff0f0;color:#b42323;border-radius:8px;padding:0 12px}
+.ledger-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.mobile-nav{display:none}.small-note{font-size:11px;color:var(--muted);margin-top:8px}
+@media(max-width:850px){.sidebar{width:190px}.main{margin-left:190px}.content{padding:18px}.ledger-grid{grid-template-columns:1fr}}
+@media(max-width:650px){.sidebar{display:none}.main{margin:0}.topbar{position:static;height:60px;padding:0 13px}.content{padding:14px 11px 85px}.heading h2{font-size:19px}.card{padding:13px}.balances{grid-template-columns:1fr 1fr}.balance strong{font-size:20px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.mobile-nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:10;background:#fff;border-top:1px solid var(--line);justify-content:space-around;padding:7px 3px calc(7px + env(safe-area-inset-bottom))}.mobile-nav button{border:0;background:none;color:#65748a;font-size:10px;font-weight:bold;padding:5px}.mobile-nav button.active{color:var(--blue)}.other-row{grid-template-columns:1fr 1fr auto}.actions .btn{flex:1}.toolbar{align-items:stretch}.toolbar input{width:100%}}
+</style>
+</head>
+<body>
+<div id="loginScreen" class="login-screen"><div class="login-card">
+<h1>Shop Currency Management</h1><p>Administrator access</p>
+<form id="loginForm"><div class="field"><label>Email address</label><input id="email" type="email" autocomplete="username" required></div><br>
+<div class="field"><label>Password</label><input id="password" type="password" autocomplete="current-password" required></div>
+<button class="btn primary" id="loginBtn" style="width:100%;margin-top:16px">Sign in</button><p id="loginError"></p></form></div></div>
+
+<div id="app" class="app hidden">
+<aside class="sidebar"><div class="brand">SC · Currency Manager</div>
+<button class="nav-btn active" data-page="dashboard">▦ Dashboard</button><button class="nav-btn" data-page="collections">▤ Weekly Collections</button><button class="nav-btn" data-page="accounts">⇄ Currency Accounts</button></aside>
+<main class="main"><header class="topbar"><h1 id="topTitle">Dashboard</h1><button class="btn light" id="logoutBtn">Sign out</button></header>
+<div class="content">
+<section id="dashboard" class="page active"><div class="heading"><h2>Business overview</h2><p>Account balances and collection activity.</p></div>
+<div id="dashboardBalances" class="grid balances"><div class="card">Loading…</div></div>
+<div class="card"><b>This month</b><p class="muted">Collection records: <strong id="monthRecords">—</strong></p><button class="btn primary" data-go="collections">Record shop collection</button></div></section>
+
+<section id="collections" class="page"><div class="heading"><h2>Weekly shop collections</h2><p>Record, review and edit shop collections.</p></div>
+<div id="collectionNotice" class="notice"></div>
+<div class="card"><div class="toolbar"><b>Monthly collection report</b><input type="month" id="reportMonth"></div>
+<div class="table-wrap"><table id="collectionTable"><thead><tr><th>Week / Shop</th><th class="num">AFN</th><th class="num">USD</th><th>Other</th></tr></thead><tbody><tr><td colspan="4" class="empty">Loading…</td></tr></tbody></table></div>
+<p class="small-note">Weeks always run Sunday through Saturday. The report includes the complete week even when it overlaps another month.</p></div>
+
+<div class="card"><b id="collectionFormTitle">Record shop collection</b><p class="muted">Select a date and shop. Existing records will load for editing.</p>
+<form id="collectionForm"><div class="form-grid">
+<div class="field"><label for="collectionDate">Collection date</label><input id="collectionDate" type="date" required></div>
+<div class="field"><label for="shopSelect">Shop / person</label><select id="shopSelect" required><option value="">Loading shops…</option></select></div>
+<div class="field"><label for="colAFN">Afghani (AFN)</label><input id="colAFN" type="number" min="0" step="0.01" placeholder="0"></div>
+<div class="field"><label for="colUSD">Dollar (USD)</label><input id="colUSD" type="number" min="0" step="0.01" placeholder="0"></div>
+<div class="field full"><label>Other currencies</label><div id="otherRows"></div><button class="btn light" id="addOther" type="button">＋ Add another currency</button><p class="small-note">Enter each currency separately, e.g. 100 درهم and 300 riyal.</p></div>
+<div class="field full"><label for="collectionDetails">Details (optional)</label><input id="collectionDetails" maxlength="250" placeholder="Add a note"></div>
+</div><div class="actions"><button class="btn primary" id="saveCollectionBtn">Save collection</button><button class="btn light" type="button" id="clearCollectionBtn">Clear</button><button class="btn danger hidden" type="button" id="deleteCollectionBtn">Delete collection</button></div></form></div>
+</section>
+
+<section id="accounts" class="page"><div class="heading"><h2>Currency accounts</h2><p>Record weekly collection receipts and other-currency conversions.</p></div>
+<div id="accountNotice" class="notice"></div><div id="accountCards" class="grid balances"></div>
+<div class="ledger-grid"><div class="card"><b id="ledgerTitle">AFN account ledger</b><p class="muted">Running balance in date order.</p><div class="table-wrap"><table id="ledgerTable"><thead><tr><th>Date</th><th>Details</th><th class="num">Receive</th><th class="num">Send</th><th class="num">Balance</th></tr></thead><tbody></tbody></table></div></div>
+<div>
+<div class="card"><b>Record weekly collection in account</b><p class="muted">Choose a date and account. The total for that Sunday–Saturday week will be filled automatically. You can change it.</p>
+<form id="transactionForm"><div class="form-grid">
+<div class="field full"><label for="transactionAccount">Account</label><select id="transactionAccount" required></select></div>
+<div class="field"><label for="transactionDate">Date</label><input id="transactionDate" type="date" required></div>
+<div class="field"><label for="transactionAmount">Receive amount</label><input id="transactionAmount" type="number" min="0.01" step="0.01" required placeholder="Enter amount"></div>
+<div class="field full"><label for="transactionDetails">Details</label><input id="transactionDetails" maxlength="250" required placeholder="Weekly shop collection"></div></div>
+<button class="btn primary" style="width:100%;margin-top:14px">Save account transaction</button></form></div>
+
+<div class="card"><b>Convert an Other currency</b><p class="muted">Convert an amount such as Dirham or Riyal into AFN or USD. Only the converted amount is added to the destination account.</p>
+<form id="conversionForm"><div class="form-grid">
+<div class="field"><label for="otherAmount">Original amount</label><input id="otherAmount" type="number" min="0.01" step="0.01" required placeholder="e.g. 100"></div>
+<div class="field"><label for="otherCurrency">Currency name</label><input id="otherCurrency" required placeholder="e.g. درهم / Riyal"></div>
+<div class="field"><label for="conversionAccount">Deposit converted amount into</label><select id="conversionAccount" required></select></div>
+<div class="field"><label for="exchangeRate">Rate (destination per 1 unit)</label><input id="exchangeRate" type="number" min="0.000001" step="any" required placeholder="e.g. 19.5"></div>
+<div class="field full"><label for="convertedAmount">Converted amount</label><input id="convertedAmount" readonly placeholder="Calculated automatically"></div>
+<div class="field full"><label for="conversionDate">Date</label><input id="conversionDate" type="date" required></div>
+</div><button class="btn primary" style="width:100%;margin-top:14px">Save conversion</button></form>
+<p class="small-note">The conversion details are saved in the AFN or USD ledger. The original Other currency is not added to an account balance.</p></div>
+</div></div></section>
+</div></main>
+<nav class="mobile-nav"><button class="active" data-page="dashboard">▦<br>Home</button><button data-page="collections">▤<br>Collections</button><button data-page="accounts">⇄<br>Accounts</button></nav>
+</div>
+
+<script>
+(()=>{
+const SUPABASE_URL="https://wayvtnsknotobfjpoddr.supabase.co";
+const SUPABASE_KEY="sb_publishable_swDTvd_H_LOxy1NqcQKQd6g_bFs14oe1";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const ACCOUNT_CURRENCIES=["AFN","USD","CNY"];
+const SHOP_ORDER=["Hameed","Zaman","Kabeer","Satar"];
+const $=id=>document.getElementById(id);
+let branches=[],accounts=[],selectedAccountId=null,currentCollectionId=null,reportItems=[];
+const today=new Date(),todayISO=iso(today);
+$("collectionDate").value=todayISO;$("transactionDate").value=todayISO;$("conversionDate").value=todayISO;$("reportMonth").value=todayISO.slice(0,7);
+function iso(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+function parseDate(s){const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function money(n){return Number(n||0).toLocaleString(undefined,{maximumFractionDigits:2})}
+function safe(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function notice(id,msg,type="success"){const e=$(id);e.textContent=msg;e.className="notice show "+type;setTimeout(()=>e.classList.remove("show"),5000)}
+function busy(btn,on,label){if(on){btn.dataset.old=btn.textContent;btn.disabled=true;btn.textContent=label||"Saving…"}else{btn.disabled=false;btn.textContent=btn.dataset.old||btn.textContent}}
+function weekRange(date){const d=parseDate(date),start=new Date(d),end=new Date(d);start.setDate(d.getDate()-d.getDay());end.setDate(start.getDate()+6);return {start:iso(start),end:iso(end)}}
+function monthWeeks(ym){const [y,m]=ym.split("-").map(Number),first=new Date(y,m-1,1),last=new Date(y,m,0);let s=new Date(first);s.setDate(s.getDate()-s.getDay());const weeks=[];while(s<=last){const e=new Date(s);e.setDate(s.getDate()+6);weeks.push({start:iso(s),end:iso(e)});s=new Date(e);s.setDate(s.getDate()+1)}return weeks}
+function shopName(r){if(r.source_type==="own_shop")return "Hameed";return branches.find(b=>String(b.id)===String(r.branch_id))?.name||"Other shop"}
+function addOtherRow(amount="",name=""){const row=document.createElement("div");row.className="other-row";row.innerHTML=`<input type="number" min="0" step="0.01" class="other-amount" placeholder="Amount" value="${safe(amount)}"><input type="text" class="other-name" maxlength="40" placeholder="Currency name" value="${safe(name)}"><button class="remove-row" type="button">×</button>`;row.querySelector("button").onclick=()=>row.remove();$("otherRows").appendChild(row)}
+function getOtherRows(){return [...$("otherRows").querySelectorAll(".other-row")].map(r=>({amount:Number(r.querySelector(".other-amount").value||0),name:r.querySelector(".other-name").value.trim()})).filter(x=>x.amount>0&&x.name)}
+function clearCollection(){currentCollectionId=null;$("collectionForm").reset();$("collectionDate").value=todayISO;$("colAFN").value="";$("colUSD").value="";$("otherRows").innerHTML="";addOtherRow();$("collectionFormTitle").textContent="Record shop collection";$("deleteCollectionBtn").classList.add("hidden")}
+function setPage(page){document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===page));document.querySelectorAll("[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===page));$("topTitle").textContent=({dashboard:"Dashboard",collections:"Weekly Collections",accounts:"Currency Accounts"})[page];if(page==="dashboard")loadDashboard();if(page==="collections")loadMonthlyReport();if(page==="accounts")loadAccountsAndLedger()}
+document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>setPage(b.dataset.page));document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>setPage(b.dataset.go));
+async function loadBranches(){const {data,error}=await db.from("branches").select("id,name").order("name");if(error)throw error;branches=data||[];$("shopSelect").innerHTML='<option value="">Select shop / person</option><option value="own_shop">Hameed (Own Shop)</option>'+branches.map(b=>`<option value="${safe(b.id)}">${safe(b.name)}</option>`).join("")}
+async function loadAccounts(){const {data,error}=await db.from("accounts").select("id,currency_code,account_name").order("currency_code");if(error)throw error;accounts=data||[];accounts.sort((a,b)=>ACCOUNT_CURRENCIES.indexOf(a.currency_code)-ACCOUNT_CURRENCIES.indexOf(b.currency_code));const mainAccounts=accounts.filter(a=>["AFN","USD"].includes(a.currency_code));if(!selectedAccountId)selectedAccountId=mainAccounts.find(a=>a.currency_code==="AFN")?.id||mainAccounts[0]?.id;$("transactionAccount").innerHTML=mainAccounts.map(a=>`<option value="${safe(a.id)}">${safe(a.currency_code)} account</option>`).join("");$("conversionAccount").innerHTML=mainAccounts.map(a=>`<option value="${safe(a.id)}">${safe(a.currency_code)} account</option>`).join("");$("transactionAccount").value=selectedAccountId||""}
+async function fetchTransactions(){const {data,error}=await db.from("account_transactions").select("id,account_id,transaction_date,direction,amount,transaction_type,details,created_at").order("transaction_date",{ascending:true}).order("created_at",{ascending:true});if(error)throw error;return data||[]}
+function balance(id,tx){return tx.filter(t=>String(t.account_id)===String(id)).reduce((n,t)=>n+(t.direction==="receive"?1:-1)*Number(t.amount||0),0)}
+async function loadDashboard(){try{if(!accounts.length)await loadAccounts();const [tx,rec]=await Promise.all([fetchTransactions(),db.from("collections").select("id").gte("collection_date",$("reportMonth").value+"-01").lte("collection_date",monthLast($("reportMonth").value))]);if(rec.error)throw rec.error;$("dashboardBalances").innerHTML=accounts.filter(a=>["AFN","USD"].includes(a.currency_code)).map(a=>`<div class="card balance"><small>${safe(a.account_name||a.currency_code+" account")}</small><strong>${money(balance(a.id,tx))} ${a.currency_code}</strong></div>`).join("");$("monthRecords").textContent=(rec.data||[]).length}catch(e){$("dashboardBalances").innerHTML=`<div class="card">${safe(e.message)}</div>`}}
+function monthLast(ym){const [y,m]=ym.split("-").map(Number);return iso(new Date(y,m,0))}
+async function loadMonthlyReport(){const ym=$("reportMonth").value;if(!ym)return;const weeks=monthWeeks(ym),from=weeks[0].start,to=weeks[weeks.length-1].end,tbody=$("collectionTable").querySelector("tbody");tbody.innerHTML='<tr><td colspan="4" class="empty">Loading report…</td></tr>';try{
+const {data:records,error}=await db.from("collections").select("id,collection_date,source_type,branch_id,details").gte("collection_date",from).lte("collection_date",to).order("collection_date");if(error)throw error;
+const ids=(records||[]).map(r=>r.id);let items=[];if(ids.length){const q=await db.from("collection_items").select("collection_id,currency_code,currency_name,amount").in("collection_id",ids);if(q.error)throw q.error;items=q.data||[]}
+const byId={};items.forEach(it=>{(byId[it.collection_id]??=[]).push(it)});
+let rows="",monthAFN=0,monthUSD=0,monthOther={};
+weeks.forEach((w,i)=>{const wr=records.filter(r=>r.collection_date>=w.start&&r.collection_date<=w.end);rows+=`<tr class="week-row"><td colspan="4">Week ${i+1} · ${w.start} to ${w.end}</td></tr>`;let wa=0,wu=0,wo={};const shops=SHOP_ORDER.map(n=>({name:n,records:wr.filter(r=>shopName(r)===n)}));wr.filter(r=>!SHOP_ORDER.includes(shopName(r))).forEach(r=>{let n=shopName(r),x=shops.find(s=>s.name===n);if(!x){x={name:n,records:[]};shops.push(x)}x.records.push(r)});
+shops.forEach(s=>{let a=0,u=0,o={};s.records.forEach(r=>(byId[r.id]||[]).forEach(it=>{const c=it.currency_code;if(c==="AFN")a+=Number(it.amount);else if(c==="USD")u+=Number(it.amount);else{const nm=it.currency_name||(c==="CNY"?"CNY":c);o[nm]=(o[nm]||0)+Number(it.amount)}}));wa+=a;wu+=u;Object.entries(o).forEach(([k,v])=>wo[k]=(wo[k]||0)+v);rows+=`<tr><td class="shop">${safe(s.name)}</td><td class="num">${money(a)}</td><td class="num">${money(u)}</td><td>${otherText(o)}</td></tr>`});
+monthAFN+=wa;monthUSD+=wu;Object.entries(wo).forEach(([k,v])=>monthOther[k]=(monthOther[k]||0)+v);rows+=`<tr class="subtotal"><td>Week ${i+1} total</td><td class="num">${money(wa)}</td><td class="num">${money(wu)}</td><td>${otherText(wo)}</td></tr>`});
+rows+=`<tr class="total-row"><td>MONTH TOTAL</td><td class="num">${money(monthAFN)}</td><td class="num">${money(monthUSD)}</td><td>${otherText(monthOther)}</td></tr>`;tbody.innerHTML=rows}catch(e){tbody.innerHTML=`<tr><td colspan="4" class="empty">Could not load report: ${safe(e.message)}</td></tr>`}}
+function otherText(o){return Object.entries(o).map(([k,v])=>`${money(v)} ${safe(k)}`).join(", ")||"—"}
+$("reportMonth").onchange=()=>{loadMonthlyReport();loadDashboard()};
+
+async function loadCollectionForEdit(){const date=$("collectionDate").value,shop=$("shopSelect").value;if(!date||!shop)return;currentCollectionId=null;$("deleteCollectionBtn").classList.add("hidden");const own=shop==="own_shop";let q=db.from("collections").select("id,details,source_type,branch_id").eq("collection_date",date).eq("source_type",own?"own_shop":"branch");q=own?q.is("branch_id",null):q.eq("branch_id",shop);const {data,error}=await q.maybeSingle();if(error){notice("collectionNotice",error.message,"error");return}if(!data){$("collectionFormTitle").textContent="Record shop collection";$("colAFN").value="";$("colUSD").value="";$("otherRows").innerHTML="";addOtherRow();$("collectionDetails").value="";return}
+currentCollectionId=data.id;$("collectionFormTitle").textContent="Edit saved collection";$("deleteCollectionBtn").classList.remove("hidden");$("collectionDetails").value=data.details||"";const result=await db.from("collection_items").select("currency_code,currency_name,amount").eq("collection_id",data.id);if(result.error){notice("collectionNotice",result.error.message,"error");return}
+$("colAFN").value="";$("colUSD").value="";$("otherRows").innerHTML="";let hasOther=false;(result.data||[]).forEach(it=>{if(it.currency_code==="AFN")$("colAFN").value=it.amount;else if(it.currency_code==="USD")$("colUSD").value=it.amount;else{hasOther=true;addOtherRow(it.amount,it.currency_name||(it.currency_code==="CNY"?"CNY":it.currency_code))}});if(!hasOther)addOtherRow()}
+$("collectionDate").onchange=loadCollectionForEdit;$("shopSelect").onchange=loadCollectionForEdit;
+$("addOther").onclick=()=>addOtherRow();
+$("clearCollectionBtn").onclick=clearCollection;
+$("collectionForm").onsubmit=async e=>{e.preventDefault();const btn=$("saveCollectionBtn");busy(btn,true,"Saving…");try{const date=$("collectionDate").value,shop=$("shopSelect").value;if(!shop)throw Error("Select a shop.");const own=shop==="own_shop",branchId=own?null:shop;const other=getOtherRows();const items=[];const afn=Number($("colAFN").value||0),usd=Number($("colUSD").value||0);if(afn>0)items.push({currency_code:"AFN",amount:afn});if(usd>0)items.push({currency_code:"USD",amount:usd});other.forEach(x=>items.push({currency_code:"CNY",currency_name:x.name,amount:x.amount}));if(!items.length)throw Error("Enter at least one amount.");if($("otherRows").querySelectorAll(".other-row").length!==other.length)throw Error("Each Other entry needs an amount and currency name.");
+if(!confirm(currentCollectionId?"Save changes to this collection?":"Save this collection? You can edit or delete it later."))return;
+let id=currentCollectionId;if(id){const u=await db.from("collections").update({details:$("collectionDetails").value.trim()||null}).eq("id",id);if(u.error)throw u.error;const d=await db.from("collection_items").delete().eq("collection_id",id);if(d.error)throw d.error}else{const ins=await db.from("collections").insert({collection_date:date,source_type:own?"own_shop":"branch",branch_id:branchId,details:$("collectionDetails").value.trim()||null}).select("id").single();if(ins.error)throw ins.error;id=ins.data.id}
+const saved=await db.from("collection_items").insert(items.map(x=>({...x,collection_id:id})));if(saved.error)throw saved.error;notice("collectionNotice",currentCollectionId?"Collection updated.":"Collection saved.");clearCollection();await loadMonthlyReport();await loadDashboard()
+}catch(err){notice("collectionNotice",err.message||"Could not save collection.","error")}finally{busy(btn,false)}};
+$("deleteCollectionBtn").onclick=async()=>{if(!currentCollectionId||!confirm("Delete this collection and all its currency entries?"))return;try{const d=await db.from("collection_items").delete().eq("collection_id",currentCollectionId);if(d.error)throw d.error;const h=await db.from("collections").delete().eq("id",currentCollectionId);if(h.error)throw h.error;notice("collectionNotice","Collection deleted.");clearCollection();await loadMonthlyReport();await loadDashboard()}catch(e){notice("collectionNotice",e.message,"error")}};
+
+async function getWeeklyCurrencyTotals(date){const w=weekRange(date);const {data:records,error}=await db.from("collections").select("id").gte("collection_date",w.start).lte("collection_date",w.end);if(error)throw error;const ids=(records||[]).map(r=>r.id);let totals={AFN:0,USD:0};if(ids.length){const q=await db.from("collection_items").select("currency_code,amount").in("collection_id",ids).in("currency_code",["AFN","USD"]);if(q.error)throw q.error;(q.data||[]).forEach(x=>totals[x.currency_code]+=Number(x.amount||0))}return totals}
+async function prefillWeekly(){const date=$("transactionDate").value,acc=accounts.find(a=>String(a.id)===String($("transactionAccount").value));if(!date||!acc)return;try{const totals=await getWeeklyCurrencyTotals(date);if(["AFN","USD"].includes(acc.currency_code)){$("transactionAmount").value=totals[acc.currency_code]||"";$("transactionDetails").value=`Weekly shop collection (${weekRange(date).start} to ${weekRange(date).end})`}}catch(e){notice("accountNotice",e.message,"error")}}
+$("transactionDate").onchange=prefillWeekly;$("transactionAccount").onchange=prefillWeekly;
+async function loadAccountsAndLedger(){try{if(!accounts.length)await loadAccounts();const tx=await fetchTransactions();$("accountCards").innerHTML=accounts.filter(a=>["AFN","USD"].includes(a.currency_code)).map(a=>`<button class="card balance" data-account="${safe(a.id)}"><small>${safe(a.account_name||a.currency_code+" account")}</small><strong>${money(balance(a.id,tx))} ${a.currency_code}</strong></button>`).join("");$("accountCards").querySelectorAll("[data-account]").forEach(b=>b.onclick=()=>{$("transactionAccount").value=b.dataset.account;selectedAccountId=b.dataset.account;renderLedger(tx);prefillWeekly()});if(!selectedAccountId)selectedAccountId=accounts.find(a=>a.currency_code==="AFN")?.id;$("transactionAccount").value=selectedAccountId||"";renderLedger(tx);await prefillWeekly()}catch(e){$("ledgerTable").querySelector("tbody").innerHTML=`<tr><td colspan="5" class="empty">${safe(e.message)}</td></tr>`}}
+function renderLedger(tx){const a=accounts.find(x=>String(x.id)===String($("transactionAccount").value||selectedAccountId));if(!a)return;$("ledgerTitle").textContent=a.currency_code+" account ledger";const list=tx.filter(t=>String(t.account_id)===String(a.id)).sort((x,y)=>(x.transaction_date||"").localeCompare(y.transaction_date||"")||(x.created_at||"").localeCompare(y.created_at||""));let b=0;const rows=list.map(t=>{const n=Number(t.amount||0),receive=t.direction==="receive";b+=receive?n:-n;return `<tr><td>${safe(t.transaction_date)}</td><td>${safe(t.details||"—")}</td><td class="num">${receive?money(n):"—"}</td><td class="num">${receive?"—":money(n)}</td><td class="num"><b>${money(b)}</b></td>`});$("ledgerTable").querySelector("tbody").innerHTML=rows.length?rows.join(""):'<tr><td colspan="5" class="empty">No transactions yet.</td></tr>'}
+$("transactionForm").onsubmit=async e=>{e.preventDefault();const btn=e.submitter;busy(btn,true,"Saving…");try{const accountId=$("transactionAccount").value,amount=Number($("transactionAmount").value),date=$("transactionDate").value;if(!accountId||!amount||amount<=0)throw Error("Enter a valid amount.");const r=await db.from("account_transactions").insert({account_id:accountId,transaction_date:date,direction:"receive",amount,transaction_type:"deposit",details:$("transactionDetails").value.trim()||"Weekly shop collection"});if(r.error)throw r.error;notice("accountNotice","Weekly collection transaction saved.");await loadAccountsAndLedger();await loadDashboard()}catch(e2){notice("accountNotice",e2.message,"error")}finally{busy(btn,false)}};
+function calcConversion(){const amount=Number($("otherAmount").value),rate=Number($("exchangeRate").value);$("convertedAmount").value=amount>0&&rate>0?(amount*rate).toFixed(2):""}
+$("otherAmount").oninput=calcConversion;$("exchangeRate").oninput=calcConversion;
+$("conversionForm").onsubmit=async e=>{e.preventDefault();const btn=e.submitter;busy(btn,true,"Saving…");try{const amount=Number($("otherAmount").value),rate=Number($("exchangeRate").value),converted=amount*rate,accountId=$("conversionAccount").value,date=$("conversionDate").value,currency=$("otherCurrency").value.trim(),acc=accounts.find(a=>String(a.id)===String(accountId));if(!amount||!rate||!currency||!acc||!["AFN","USD"].includes(acc.currency_code))throw Error("Complete all conversion fields.");const details=`Converted ${money(amount)} ${currency} at ${rate} ${acc.currency_code} per 1 ${currency}`;const r=await db.from("account_transactions").insert({account_id:accountId,transaction_date:date,direction:"receive",amount:converted,transaction_type:"exchange",details});if(r.error)throw r.error;notice("accountNotice",`${money(converted)} ${acc.currency_code} added to ${acc.currency_code} account.`);$("conversionForm").reset();$("conversionDate").value=todayISO;$("convertedAmount").value="";await loadAccountsAndLedger();await loadDashboard()}catch(e2){notice("accountNotice",e2.message,"error")}finally{busy(btn,false)}};
+
+$("loginForm").onsubmit=async e=>{e.preventDefault();$("loginBtn").disabled=true;$("loginError").textContent="";try{const {error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error)throw error}catch(err){$("loginError").textContent=err.message}finally{$("loginBtn").disabled=false}};
+$("logoutBtn").onclick=async()=>{const {error}=await db.auth.signOut();if(error)alert(error.message)};
+async function showApp(){$("loginScreen").classList.add("hidden");$("app").classList.remove("hidden");try{await Promise.all([loadBranches(),loadAccounts()]);addOtherRow();await loadDashboard();await loadMonthlyReport();await prefillWeekly()}catch(e){alert("Could not load setup data: "+e.message)}}
+function showLogin(){$("app").classList.add("hidden");$("loginScreen").classList.remove("hidden")}
+db.auth.onAuthStateChange((_event,session)=>{if(session)showApp();else showLogin()});db.auth.getSession().then(({data})=>{if(data.session)showApp();else showLogin()});
+})();
+</script>
+</body>
+</html>
