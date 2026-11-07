@@ -103,6 +103,22 @@ html[dir="rtl"] .dashboard-hero:after{right:auto;left:7%}
 .report-actions{display:flex;gap:9px;flex-wrap:wrap}.report-actions .btn{min-height:42px}.report-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0 18px}.report-kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px;box-shadow:0 6px 20px #10243e08}.report-kpi small{display:block;color:var(--muted);font-size:11px;font-weight:700}.report-kpi strong{display:block;font-size:21px;margin-top:7px;overflow-wrap:anywhere}.report-section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:22px 0 12px}.report-section-title h3{margin:0;font-size:16px}.report-subtitle{color:var(--muted);font-size:12px;margin:5px 0 12px}.report-table{min-width:760px}.report-table .positive{color:#138a58;font-weight:750}.report-table .negative{color:#d14343;font-weight:750}.report-table .exchange{color:#7650bd;font-weight:750}.report-empty{padding:22px;text-align:center;color:var(--muted)}#reportPrintRoot{display:none}
 @media(max-width:650px){.report-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.report-kpi{padding:12px}.report-kpi strong{font-size:17px}.report-actions{display:grid;grid-template-columns:1fr 1fr}.report-actions .btn{width:100%;padding:11px 8px;font-size:11px}}
 @media print{ @page{size:A4 landscape;margin:12mm} body{background:#fff!important}body *{visibility:hidden!important}#reportPrintRoot,#reportPrintRoot *{visibility:visible!important}#reportPrintRoot{display:block!important;position:absolute;left:0;top:0;width:100%;padding:0;color:#172033;font:10px Arial,sans-serif}#reportPrintRoot h1{font-size:19px;margin:0 0 4px}#reportPrintRoot h2{font-size:14px;margin:18px 0 7px}#reportPrintRoot p{font-size:9px;color:#555;margin:0 0 10px}#reportPrintRoot table{width:100%;min-width:0;border-collapse:collapse;margin-bottom:14px}#reportPrintRoot th,#reportPrintRoot td{border:1px solid #d9e0e8;padding:5px 6px;font-size:8px;white-space:normal}#reportPrintRoot th{background:#edf2f8!important;color:#26374b;text-align:left}#reportPrintRoot tr{break-inside:avoid}#reportPrintRoot .report-kpis{display:flex;gap:10px}#reportPrintRoot .report-kpi{border:1px solid #ddd;padding:8px;flex:1}#reportPrintRoot .report-kpi strong{font-size:13px}#reportPrintRoot .report-kpi small{font-size:8px} }
+
+/* Mobile account cards layout: Dashboard + Accounts */
+@media(max-width:650px){
+
+  #dashboardBalances.balances,
+  #accountCards.balances{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  #dashboardBalances .balance:nth-child(3),
+  #accountCards .balance:nth-child(3){
+    grid-column:1/-1;
+  }
+
+}
+
 </style>
 </head>
 <body>
